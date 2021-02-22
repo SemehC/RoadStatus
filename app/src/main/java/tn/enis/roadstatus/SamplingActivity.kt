@@ -34,18 +34,19 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var loc:Location?=null
     var speed:Float=0f
     var index:Int = 0
-    var endFile:JsonArray?=null
+    var endFile:String?=null
+    var map = mutableMapOf<Int, Map<String, String>>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
         index = 0
-        endFile = JsonArray()
+        endFile = ""
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
             val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
-            var filename : String = simpleDateFormat.format(Date())
+            var filename : String = simpleDateFormat.format(Date())+".json"
             val folder = this.getExternalFilesDir(null)?.absolutePath
             val f = File(folder, "PFA")
             val file = File(f.absolutePath + "/" + filename)
@@ -56,6 +57,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             else
             {
                 try {
+                    val gson = Gson()
+                    endFile+=gson.toJson(map)
                     val fw = FileWriter(file.absoluteFile)
                     val bw = BufferedWriter(fw)
                     bw.write(endFile.toString())
@@ -108,20 +111,19 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
         val sensor = event!!.sensor
         var currentTime = System.currentTimeMillis()
-        var gyrox:Double=0.0
-        var gyroy:Double=0.0
-        var gyroz:Double=0.0
-        var accx:Double=0.0
-        var accy:Double=0.0
-        var accz:Double=0.0
-        var longitude:Double?=0.0
-        var altitude:Double?=0.0
-        var latitude:Double?=0.0
+        var gyrox=0.0
+        var gyroy=0.0
+        var gyroz=0.0
+        var accx=0.0
+        var accy=0.0
+        var accz=0.0
+        var longitude:Double?
+        var altitude:Double?
+        var latitude:Double?
         if ((currentTime - oldtime) > 100) {
-            longitude = loc?.longitude
-            altitude = loc?.altitude
-            latitude = loc?.longitude
-            Log.d("Location : ", "" + loc?.longitude + " : " + loc?.latitude + " : " + loc?.altitude)
+            longitude = if(loc?.longitude==null) 0.0 else loc?.longitude
+            altitude = if(loc?.altitude==null) 0.0 else loc?.altitude
+            latitude = if(loc?.latitude==null) 0.0 else loc?.latitude
             if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
                 accx = ((event.values[0] * 180) / PI)
                 accy = ((event.values[1] * 180) / PI)
@@ -142,15 +144,11 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             {
                 speed = 0f
             }
-            Log.d("Speed : ", speed.toString())
-            var array = mapOf("speed" to speed.toString(), "Gyro-x" to gyrox, "Gyro-y" to gyroy, "Gyro-z" to gyroz, "Acc-x" to accx, "Acc-y" to accy, "Acc-z" to accz, "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
-            var map = mutableMapOf<Int, Map<String, String>>()
+            var array = mapOf("speed" to speed, "Gyro-x" to gyrox, "Gyro-y" to gyroy, "Gyro-z" to gyroz, "Acc-x" to accx, "Acc-y" to accy, "Acc-z" to accz, "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+
             map.put(index, array as Map<String, String>)
             index++
-            val gson = Gson()
 
-            //Log.d("JSON : ",gson.toJson(map).toString())
-            endFile?.add(gson.toJson(map))
         }
 
     }
