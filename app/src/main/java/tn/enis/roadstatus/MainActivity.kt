@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val bt = findViewById<Button>(R.id.start_scan_bt)
         bt.setOnClickListener {
-            val intent = Intent(this,ScanningActivity::class.java)
+            val intent = Intent(this,SamplingActivity::class.java)
             startActivity(intent)
         }
     }
