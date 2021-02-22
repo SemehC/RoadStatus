@@ -22,6 +22,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
     var sensorManager: SensorManager? = null
+    var loc:Location?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +67,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         val sensor = event!!.sensor
         var currentTime = System.currentTimeMillis()
         if ((currentTime - oldtime) > 100) {
+
+            Log.d("Location : ",""+ loc?.longitude+" : "+loc?.latitude+" : "+loc?.altitude)
             if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
                 Log.d("Acc-x: ", event!!.values[0].toString())
                 Log.d("Acc-y: ", event!!.values[1].toString())
@@ -90,8 +93,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     //define the listener
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            Log.d("Location : ","" + location.longitude + ":" + location.latitude )
-
+            //Log.d("Location : ","" + location.longitude + ":" + location.latitude )
+            loc = location
         }
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
         override fun onProviderEnabled(provider: String) {}
