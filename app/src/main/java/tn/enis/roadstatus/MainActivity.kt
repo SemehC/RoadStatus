@@ -13,6 +13,7 @@ class MainActivity : AppCompatActivity() {
         bt.setOnClickListener {
             val intent = Intent(this,SamplingActivity::class.java)
             startActivity(intent)
+            finish()
         }
     }
 }

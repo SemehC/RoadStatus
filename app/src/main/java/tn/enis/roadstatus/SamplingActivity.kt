@@ -14,6 +14,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -28,6 +29,10 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -35,12 +40,13 @@ import java.io.IOException
 import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.math.PI
 import kotlin.random.Random
 
 
 private const val PERMISSION_REQUEST=10
-
+private const val TIMER_DELAY=500L
 class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
@@ -57,18 +63,23 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var altitude:Double?=0.0
     var latitude:Double?=0.0
 
-
+    var timerStarted:Long?=0L
+    var timer:Long=0L
     var speedText:TextView?=null
     var timeText:TextView?=null
 
+    var locationManager:LocationManager?=null
+    var locationObtained:Boolean=false
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
         index = 0
         endFile = ""
-        val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+
         val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+
+        locationManager =  getSystemService(LOCATION_SERVICE) as LocationManager
 
         speedText = findViewById(R.id.speed_text_view)
         timeText = findViewById(R.id.time_text_view)
@@ -89,7 +100,16 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
         all_permissions_granted = checkPermissions(perms)
 
+        if(all_permissions_granted){
+            locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10L, 0f, locationListener)
 
+            sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+            acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+            gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+        }else{
+            Toast.makeText(this, "Permissions not granted", Toast.LENGTH_SHORT).show()
+            makeRequests(perms)
+        }
 
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
@@ -120,17 +140,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
             startActivity(Intent(this, MainActivity::class.java))
-        }
-
-        if(all_permissions_granted){
-            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0L, 0f, locationListener)
-
-            sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-            gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        }else{
-            Toast.makeText(this, "Permissions not granted", Toast.LENGTH_SHORT).show()
-            makeRequests(perms)
+            finish()
         }
 
 
@@ -158,11 +168,13 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     override fun onStart() {
         super.onStart()
         mapView.onStart()
+
     }
 
     override fun onResume() {
         super.onResume()
         mapView.onResume()
+
         if(all_permissions_granted){
             sensorManager!!.registerListener(this, acc_sensor, SensorManager.SENSOR_DELAY_NORMAL)
             sensorManager!!.registerListener(this, gyro, SensorManager.SENSOR_DELAY_NORMAL)
@@ -184,6 +196,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         mapView.onStop()
     }
 
+
+
     override fun onLowMemory() {
         super.onLowMemory()
         mapView.onLowMemory()
@@ -196,9 +210,14 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
     var oldtime: Long = 0
     var x = 0f
+    @SuppressLint("MissingPermission")
     override fun onSensorChanged(event: SensorEvent?) {
 
-        if(all_permissions_granted){
+
+        if(all_permissions_granted && locationObtained){
+            timer = System.currentTimeMillis() - timerStarted!!
+            timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
+
             val sensor = event!!.sensor
             var currentTime = System.currentTimeMillis()
             var gyrox=0.0
@@ -209,8 +228,10 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             var accz=0.0
 
             if ((currentTime - oldtime) > 5000) {
-                polyline?.points?.add(LatLng(Random.nextDouble() * 30, Random.nextDouble() * 30))
-                updateMapUI()
+                oldtime=currentTime
+
+               // polyline?.points?.add(LatLng(Random.nextDouble() * 30, Random.nextDouble() * 30))
+                //updateMapUI()
 
                 if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
                     accx = ((event.values[0] * 180) / PI)
@@ -227,10 +248,13 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                 if(loc?.hasSpeed()==true)
                 {
                     speed = loc?.speed!!
+                    speedText?.text = speed.toString()+" KM/H"
+
                 }
                 else
                 {
                     speed = 0f
+                    speedText?.text = speed.toString()+" KM/H"
                 }
                 var array = mapOf("speed" to speed, "Gyro-x" to gyrox, "Gyro-y" to gyroy, "Gyro-z" to gyroz, "Acc-x" to accx, "Acc-y" to accy, "Acc-z" to accz, "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
 
@@ -238,6 +262,9 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                 index++
 
             }
+        }else{
+            locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10L, 0f, locationListener)
+
         }
 
 
@@ -253,20 +280,18 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         gmap?.clear()
         gmap?.clear()
 
-        var icon = BitmapDescriptorFactory.fromResource(R.drawable.crosshair)
-
 
         gmap?.addMarker(
                 MarkerOptions().position(LatLng(latitude!!, longitude!!))
                         .title("My Position")
         )
         gmap?.addPolyline(polyline)
+        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
     }
 
-    fun bitmapSizeByScall(bitmapIn: Bitmap, scall_zero_to_one_f: Float): Bitmap? {
-        return Bitmap.createScaledBitmap(bitmapIn,
-                Math.round(bitmapIn.width * scall_zero_to_one_f),
-                Math.round(bitmapIn.height * scall_zero_to_one_f), false)
+    private fun startTimer(){
+        timerStarted=System.currentTimeMillis()
+
     }
 
     //define the listener
@@ -276,9 +301,13 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             longitude = if(loc?.longitude==null) 0.0 else loc?.longitude
             altitude = if(loc?.altitude==null) 0.0 else loc?.altitude
             latitude = if(loc?.latitude==null) 0.0 else loc?.latitude
-            gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
-            polyline?.add(LatLng(latitude!!, longitude!!))
-            updateMapUI()
+            if(longitude!=0.0 && latitude!= 0.0 && !locationObtained){
+                locationObtained=true
+                polyline?.add(LatLng(latitude!!, longitude!!))
+                updateMapUI()
+                startTimer()
+            }
+
         }
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
         override fun onProviderEnabled(provider: String) {}
