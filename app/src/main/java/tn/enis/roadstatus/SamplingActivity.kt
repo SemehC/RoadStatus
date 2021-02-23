@@ -1,11 +1,8 @@
 package tn.enis.roadstatus
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -14,39 +11,28 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import tn.enis.roadstatus.other.Utilities
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
-import java.sql.Time
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.PI
-import kotlin.random.Random
 
 
-private const val PERMISSION_REQUEST=10
-private const val TIMER_DELAY=500L
 class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
@@ -56,7 +42,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var index:Int = 0
     var endFile:String?=null
     var map = mutableMapOf<Int, Map<String, String>>()
-    var all_permissions_granted=false
+    var allPermissionsGranted=false
     var gmap :GoogleMap?=null
     var polyline: PolylineOptions?= PolylineOptions()
     var longitude:Double?=0.0
@@ -77,8 +63,6 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         index = 0
         endFile = ""
 
-        val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
-
         locationManager =  getSystemService(LOCATION_SERVICE) as LocationManager
 
         speedText = findViewById(R.id.speed_text_view)
@@ -98,9 +82,9 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
 
 
-        all_permissions_granted = checkPermissions(perms)
+        allPermissionsGranted = Utilities.hasStoragePermissions(this) && Utilities.hasLocationPermissions(this)
 
-        if(all_permissions_granted){
+        if(allPermissionsGranted){
             locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10L, 0f, locationListener)
 
             sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -108,13 +92,12 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
         }else{
             Toast.makeText(this, "Permissions not granted", Toast.LENGTH_SHORT).show()
-            makeRequests(perms)
         }
 
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
 
-            if(all_permissions_granted){
+            if(allPermissionsGranted){
                 val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
                 var filename : String = simpleDateFormat.format(Date())+".json"
                 val folder = this.getExternalFilesDir(null)?.absolutePath
@@ -146,23 +129,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
     }
 
-    fun checkPermissions(permissions: Array<String>):Boolean{
 
-        for (i in permissions){
-            if(ContextCompat.checkSelfPermission(this, i) == PackageManager.PERMISSION_DENIED) return false
-        }
-
-        return true
-    }
-
-    private fun makeRequests(perms: Array<String>) {
-        for (i in perms.indices){
-            ActivityCompat.requestPermissions(this,
-                    arrayOf(perms[i]),
-                    i)
-        }
-
-    }
 
 
     override fun onStart() {
@@ -175,7 +142,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         super.onResume()
         mapView.onResume()
 
-        if(all_permissions_granted){
+        if(allPermissionsGranted){
             sensorManager!!.registerListener(this, acc_sensor, SensorManager.SENSOR_DELAY_NORMAL)
             sensorManager!!.registerListener(this, gyro, SensorManager.SENSOR_DELAY_NORMAL)
         }
@@ -185,7 +152,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     override fun onPause() {
         super.onPause()
         mapView.onPause()
-        if(all_permissions_granted){
+        if(allPermissionsGranted){
             sensorManager!!.unregisterListener(this)
         }
 
@@ -214,7 +181,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent?) {
 
 
-        if(all_permissions_granted && locationObtained){
+        if(allPermissionsGranted && locationObtained){
             timer = System.currentTimeMillis() - timerStarted!!
             timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
 
