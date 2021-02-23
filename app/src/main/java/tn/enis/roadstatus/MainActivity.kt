@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
         bt.setOnClickListener {
             val intent = Intent(this, SamplingActivity::class.java)
             startActivity(intent)
+            finish()
         }
         requestPermissions()
     }
