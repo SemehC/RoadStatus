@@ -28,6 +28,8 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
+import timber.log.Timber
+import tn.enis.roadstatus.other.Utilities
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -78,16 +80,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             gmap = it
         }
 
-
-
-
-
-
-
-
-
-
-        all_permissions_granted = checkPermissions(perms)
+        all_permissions_granted = Utilities.hasLocationPermissions(this) && Utilities.hasStoragePermissions(this)
 
 
 
@@ -128,32 +121,10 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
             acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
             gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        }else{
-            Toast.makeText(this, "Permissions not granted", Toast.LENGTH_SHORT).show()
-            makeRequests(perms)
         }
 
 
     }
-
-    fun checkPermissions(permissions: Array<String>):Boolean{
-
-        for (i in permissions){
-            if(ContextCompat.checkSelfPermission(this, i) == PackageManager.PERMISSION_DENIED) return false
-        }
-
-        return true
-    }
-
-    private fun makeRequests(perms: Array<String>) {
-        for (i in perms.indices){
-            ActivityCompat.requestPermissions(this,
-                    arrayOf(perms[i]),
-                    i)
-        }
-
-    }
-
 
     override fun onStart() {
         super.onStart()
@@ -195,10 +166,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     var oldtime: Long = 0
-    var x = 0f
     override fun onSensorChanged(event: SensorEvent?) {
 
-        if(all_permissions_granted){
             val sensor = event!!.sensor
             var currentTime = System.currentTimeMillis()
             var gyrox=0.0
@@ -209,8 +178,6 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             var accz=0.0
 
             if ((currentTime - oldtime) > 5000) {
-                polyline?.points?.add(LatLng(Random.nextDouble() * 30, Random.nextDouble() * 30))
-                updateMapUI()
 
                 if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
                     accx = ((event.values[0] * 180) / PI)
@@ -237,10 +204,8 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                 map.put(index, array as Map<String, String>)
                 index++
 
+
             }
-        }
-
-
 
     }
 
@@ -251,7 +216,6 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun updateMapUI(){
         gmap?.clear()
-        gmap?.clear()
 
         var icon = BitmapDescriptorFactory.fromResource(R.drawable.crosshair)
 
@@ -261,12 +225,6 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                         .title("My Position")
         )
         gmap?.addPolyline(polyline)
-    }
-
-    fun bitmapSizeByScall(bitmapIn: Bitmap, scall_zero_to_one_f: Float): Bitmap? {
-        return Bitmap.createScaledBitmap(bitmapIn,
-                Math.round(bitmapIn.width * scall_zero_to_one_f),
-                Math.round(bitmapIn.height * scall_zero_to_one_f), false)
     }
 
     //define the listener
