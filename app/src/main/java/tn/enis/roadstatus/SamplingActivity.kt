@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -12,27 +13,31 @@ import android.hardware.SensorManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Build.VERSION_CODES.M
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.util.Log
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import kotlinx.android.synthetic.main.activity_scanning.*
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.sql.Time
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
 import java.util.*
 import kotlin.math.PI
+import kotlin.random.Random
+
 
 private const val PERMISSION_REQUEST=10
 
@@ -47,6 +52,14 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     var map = mutableMapOf<Int, Map<String, String>>()
     var all_permissions_granted=false
     var gmap :GoogleMap?=null
+    var polyline: PolylineOptions?= PolylineOptions()
+    var longitude:Double?=0.0
+    var altitude:Double?=0.0
+    var latitude:Double?=0.0
+
+
+    var speedText:TextView?=null
+    var timeText:TextView?=null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,13 +68,27 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
         index = 0
         endFile = ""
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.ACCESS_FINE_LOCATION)
+        val perms = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION)
+
+        speedText = findViewById(R.id.speed_text_view)
+        timeText = findViewById(R.id.time_text_view)
 
         mapView.onCreate(savedInstanceState)
         mapView.getMapAsync {
             gmap = it
         }
+
+
+
+
+
+
+
+
+
+
         all_permissions_granted = checkPermissions(perms)
+
 
 
         val bt = findViewById<Button>(R.id.stop_scan_bt)
@@ -92,7 +119,7 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
                     }
                 }
             }
-            startActivity(Intent(this,MainActivity::class.java))
+            startActivity(Intent(this, MainActivity::class.java))
         }
 
         if(all_permissions_granted){
@@ -109,16 +136,16 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
 
     }
 
-    fun checkPermissions(permissions:Array<String>):Boolean{
+    fun checkPermissions(permissions: Array<String>):Boolean{
 
         for (i in permissions){
-            if(ContextCompat.checkSelfPermission(this,i) == PackageManager.PERMISSION_DENIED) return false
+            if(ContextCompat.checkSelfPermission(this, i) == PackageManager.PERMISSION_DENIED) return false
         }
 
         return true
     }
 
-    private fun makeRequests(perms:Array<String>) {
+    private fun makeRequests(perms: Array<String>) {
         for (i in perms.indices){
             ActivityCompat.requestPermissions(this,
                     arrayOf(perms[i]),
@@ -180,13 +207,11 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
             var accx=0.0
             var accy=0.0
             var accz=0.0
-            var longitude:Double?
-            var altitude:Double?
-            var latitude:Double?
-            if ((currentTime - oldtime) > 100) {
-                longitude = if(loc?.longitude==null) 0.0 else loc?.longitude
-                altitude = if(loc?.altitude==null) 0.0 else loc?.altitude
-                latitude = if(loc?.latitude==null) 0.0 else loc?.latitude
+
+            if ((currentTime - oldtime) > 5000) {
+                polyline?.points?.add(LatLng(Random.nextDouble() * 30, Random.nextDouble() * 30))
+                updateMapUI()
+
                 if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
                     accx = ((event.values[0] * 180) / PI)
                     accy = ((event.values[1] * 180) / PI)
@@ -224,15 +249,43 @@ class SamplingActivity : AppCompatActivity(), SensorEventListener {
     }
 
 
+    private fun updateMapUI(){
+        gmap?.clear()
+        gmap?.clear()
+
+        var icon = BitmapDescriptorFactory.fromResource(R.drawable.crosshair)
+
+
+        gmap?.addMarker(
+                MarkerOptions().position(LatLng(latitude!!, longitude!!))
+                        .title("My Position")
+        )
+        gmap?.addPolyline(polyline)
+    }
+
+    fun bitmapSizeByScall(bitmapIn: Bitmap, scall_zero_to_one_f: Float): Bitmap? {
+        return Bitmap.createScaledBitmap(bitmapIn,
+                Math.round(bitmapIn.width * scall_zero_to_one_f),
+                Math.round(bitmapIn.height * scall_zero_to_one_f), false)
+    }
+
     //define the listener
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             loc = location
+            longitude = if(loc?.longitude==null) 0.0 else loc?.longitude
+            altitude = if(loc?.altitude==null) 0.0 else loc?.altitude
+            latitude = if(loc?.latitude==null) 0.0 else loc?.latitude
+            gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
+            polyline?.add(LatLng(latitude!!, longitude!!))
+            updateMapUI()
         }
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
         override fun onProviderEnabled(provider: String) {}
         override fun onProviderDisabled(provider: String) {}
     }
+
+
 
 
 
