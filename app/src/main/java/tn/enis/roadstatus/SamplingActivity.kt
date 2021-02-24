@@ -88,7 +88,8 @@ class SamplingActivity : AppCompatActivity() {
 
 
         // Getting location manager
-        locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10L, 0f, locationListener)
+        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, locationListener)
+
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
@@ -198,12 +199,8 @@ class SamplingActivity : AppCompatActivity() {
         while(stillScanning){
             timer = System.currentTimeMillis() - timerStarted!!
             var currentTime = System.currentTimeMillis()
-
-            timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
-
             if ((currentTime - oldtime) > samlplingDelay) {
                 oldtime = currentTime
-
                 gyroData = gManager.getData()
                 accData = accManager.getData()
                 gotData()
@@ -217,32 +214,53 @@ class SamplingActivity : AppCompatActivity() {
 
     private fun gotData(){
 
-        //checkSpeed()
-        addDataToMap()
-        //addToPolyLine()
+        GlobalScope.launch {
+            checkSpeed()
+            addToPolyLine()
+            updateUI()
+        }
+
+       // addDataToMap()
+
 
     }
 
-    private fun checkSpeed(){
-        if(loc?.hasSpeed()==true)
-        {
-            speed = loc?.speed!!
+    suspend fun checkSpeed(){
+        withContext(Dispatchers.Default){
+            if(loc?.hasSpeed()==true)
+            {
+                speed = loc?.speed!!
+                if(speed<9) samlplingDelay=1000f
+                if(speed>=9) samlplingDelay=500f
+                if(speed>16) samlplingDelay=250f
+                if(speed>27) samlplingDelay=100f
+            }
+            else
+            {
+                speed = 0f
+                samlplingDelay=5000f
+            }
+        }
+
+    }
+
+    suspend fun updateUI(){
+        withContext(Dispatchers.Main){
             speedText?.text = (speed*3.6).toString()+" KM/H"
-            /*if(speed<9) samlplingDelay=1000f
-            if(speed>=9) samlplingDelay=500f
-            if(speed>16) samlplingDelay=250f
-            if(speed>27) samlplingDelay=100f*/
+            timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
-        else
-        {
-            speed = 0f
-           // samlplingDelay=5000f
-            speedText?.text = speed.toString()+" KM/H"
-        }
+
     }
 
-    private fun addToPolyLine(){
-        polyline?.add(LatLng(latitude!!, longitude!!))
+    suspend fun addToPolyLine(){
+        withContext(Dispatchers.Default){
+            var array = mapOf("speed" to speed*3.6, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+            map[index] = array as Map<String, String>
+            index++
+
+            polyline?.add(LatLng(latitude!!, longitude!!))
+        }
+
 
     }
 
