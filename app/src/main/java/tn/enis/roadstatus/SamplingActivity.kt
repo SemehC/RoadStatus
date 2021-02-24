@@ -4,17 +4,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -24,7 +20,6 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
-import tn.enis.roadstatus.other.Utilities
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -32,39 +27,38 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.math.PI
 
 
 class SamplingActivity : AppCompatActivity() {
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
     var sensorManager: SensorManager? = null
-    var loc:Location?=null
-    var speed:Float=0f
-    var index:Int = 0
-    var endFile:String?=null
+    var loc: Location? = null
+    var speed: Float = 0f
+    var index: Int = 0
+    var endFile: String? = null
     var map = mutableMapOf<Int, Map<String, String>>()
 
-    var gmap :GoogleMap?=null
-    var polyline: PolylineOptions?= PolylineOptions()
-    var longitude:Double?=0.0
-    var altitude:Double?=0.0
-    var latitude:Double?=0.0
+    var gmap: GoogleMap? = null
+    var polyline: PolylineOptions? = PolylineOptions()
+    var longitude: Double? = 0.0
+    var altitude: Double? = 0.0
+    var latitude: Double? = 0.0
 
-    var timerStarted:Long?=0L
-    var timer:Long=0L
-    var speedText:TextView?=null
-    var timeText:TextView?=null
+    var timerStarted: Long? = 0L
+    var timer: Long = 0L
+    var speedText: TextView? = null
+    var timeText: TextView? = null
 
-    var samlplingDelay:Float=1000F
+    var samlplingDelay: Float = 1000F
 
-    var gManager:GyroscopeListener= GyroscopeListener()
-    var accManager:AccelerometerListener = AccelerometerListener()
+    var gManager: GyroscopeListener = GyroscopeListener()
+    var accManager: AccelerometerListener = AccelerometerListener()
 
-    var locationManager:LocationManager?=null
-    var locationObtained:Boolean=false
+    var locationManager: LocationManager? = null
+    var locationObtained: Boolean = false
 
-    var stillScanning:Boolean=true
+    var stillScanning: Boolean = true
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,7 +68,7 @@ class SamplingActivity : AppCompatActivity() {
         index = 0
         endFile = ""
         //Initializing Location Manager
-        locationManager =  getSystemService(LOCATION_SERVICE) as LocationManager
+        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         //Getting Text views
         speedText = findViewById(R.id.speed_text_view)
@@ -86,7 +80,6 @@ class SamplingActivity : AppCompatActivity() {
         }
 
 
-
         // Getting location manager
         locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, locationListener)
 
@@ -96,37 +89,31 @@ class SamplingActivity : AppCompatActivity() {
         gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
 
-
         //Stop Button Clicked !!
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
             saveFile()
-            stillScanning=false
+            stillScanning = false
             startActivity(Intent(this, MainActivity::class.java))
             finish()
         }
 
 
-
     }
 
 
-
-    private fun saveFile(){
+    private fun saveFile() {
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
-        var filename : String = simpleDateFormat.format(Date())+".json"
+        var filename: String = simpleDateFormat.format(Date()) + ".json"
         val folder = this.getExternalFilesDir(null)?.absolutePath
         val f = File(folder, "PFA")
         val file = File(f.absolutePath + "/" + filename)
-        if(!f.exists())
-        {
+        if (!f.exists()) {
             f.mkdir()
-        }
-        else
-        {
+        } else {
             try {
                 val gson = Gson()
-                endFile+=gson.toJson(map)
+                endFile += gson.toJson(map)
                 val fw = FileWriter(file.absoluteFile)
                 val bw = BufferedWriter(fw)
                 bw.write(endFile.toString())
@@ -138,7 +125,7 @@ class SamplingActivity : AppCompatActivity() {
         }
     }
 
-    private fun startScanning(){
+    private fun startScanning() {
         GlobalScope.launch {
             scanning()
         }
@@ -158,8 +145,8 @@ class SamplingActivity : AppCompatActivity() {
         sensorManager!!.registerListener(gManager, gyro, SensorManager.SENSOR_DELAY_NORMAL)
 
 
-
     }
+
     override fun onPause() {
         super.onPause()
         mapView.onPause()
@@ -174,7 +161,6 @@ class SamplingActivity : AppCompatActivity() {
         super.onStop()
         mapView.onStop()
     }
-
 
 
     override fun onLowMemory() {
@@ -192,11 +178,11 @@ class SamplingActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
 
-    lateinit var gyroData:Array<Double>
-    lateinit var accData:Array<Double>
-    private suspend fun scanning(){
+    lateinit var gyroData: Array<Double>
+    lateinit var accData: Array<Double>
+    private suspend fun scanning() {
 
-        while(stillScanning){
+        while (stillScanning) {
             timer = System.currentTimeMillis() - timerStarted!!
             var currentTime = System.currentTimeMillis()
             if ((currentTime - oldtime) > samlplingDelay) {
@@ -212,49 +198,44 @@ class SamplingActivity : AppCompatActivity() {
     }
 
 
-    private fun gotData(){
+    private fun gotData() {
 
         GlobalScope.launch {
             checkSpeed()
-            addToPolyLine()
+            addData()
             updateUI()
         }
 
-       // addDataToMap()
-
 
     }
 
-    suspend fun checkSpeed(){
-        withContext(Dispatchers.Default){
-            if(loc?.hasSpeed()==true)
-            {
+    private suspend fun checkSpeed() {
+        withContext(Dispatchers.Default) {
+            if (loc?.hasSpeed() == true) {
                 speed = loc?.speed!!
-                if(speed<9) samlplingDelay=1000f
-                if(speed>=9) samlplingDelay=500f
-                if(speed>16) samlplingDelay=250f
-                if(speed>27) samlplingDelay=100f
-            }
-            else
-            {
+                if (speed < 9) samlplingDelay = 1000f
+                if (speed >= 9) samlplingDelay = 500f
+                if (speed > 16) samlplingDelay = 250f
+                if (speed > 27) samlplingDelay = 100f
+            } else {
                 speed = 0f
-                samlplingDelay=5000f
+                samlplingDelay = 5000f
             }
         }
 
     }
 
-    suspend fun updateUI(){
-        withContext(Dispatchers.Main){
-            speedText?.text = (speed*3.6).toString()+" KM/H"
-            timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
+    private suspend fun updateUI() {
+        withContext(Dispatchers.Main) {
+            speedText?.text = (speed * 3.6).toString() + " KM/H"
+            timeText?.text = TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
 
     }
 
-    suspend fun addToPolyLine(){
-        withContext(Dispatchers.Default){
-            var array = mapOf("speed" to speed*3.6, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+    private suspend fun addData() {
+        withContext(Dispatchers.Default) {
+            var array = mapOf("speed" to speed * 3.6, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
             map[index] = array as Map<String, String>
             index++
 
@@ -265,90 +246,9 @@ class SamplingActivity : AppCompatActivity() {
     }
 
 
-   private fun addDataToMap(){
-
-       var array = mapOf("speed" to speed*3.6, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
-       map[index] = array as Map<String, String>
-       index++
-
-   }
-
-/*
-    override fun onSensorChanged(event: SensorEvent?) {
-
-        if(allPermissionsGranted && locationObtained){
-            timer = System.currentTimeMillis() - timerStarted!!
-            timeText?.text= TimeUnit.MILLISECONDS.toSeconds(timer).toString()
-
-            val sensor = event!!.sensor
-            var currentTime = System.currentTimeMillis()
-            var gyrox=0.0
-            var gyroy=0.0
-            var gyroz=0.0
-            var accx=0.0
-            var accy=0.0
-            var accz=0.0
-
-            if ((currentTime - oldtime) > samlplingDelay) {
-                oldtime=currentTime
-
-               // polyline?.points?.add(LatLng(Random.nextDouble() * 30, Random.nextDouble() * 30))
-                //updateMapUI()
-
-                if(sensor.type == Sensor.TYPE_LINEAR_ACCELERATION){
-                    accx = ((event.values[0] * 180) / PI)
-                    accy = ((event.values[1] * 180) / PI)
-                    accz = ((event.values[2] * 180) / PI)
-                }
-
-                if(sensor.type == Sensor.TYPE_GYROSCOPE){
-                    gyrox = ((event.values[0] * 180) / PI)
-                    gyroy = ((event.values[1] * 180) / PI)
-                    gyroz = ((event.values[2] * 180) / PI)
-                }
-
-                Log.d("test : ",gManager.gyrox.toString())
-                Log.d("test2 : ",accManager.accx.toString())
-
-                if(loc?.hasSpeed()==true)
-                {
-                    speed = loc?.speed!!
-                    speedText?.text = speed.toString()+" KM/H"
-                    if(speed<9) samlplingDelay=1000f
-                    if(speed>=9) samlplingDelay=500f
-                    if(speed>16) samlplingDelay=250f
-                    if(speed>27) samlplingDelay=100f
-                }
-                else
-                {
-                    speed = 0f
-                    samlplingDelay=5000f
-                    speedText?.text = speed.toString()+" KM/H"
-                }
-                var array = mapOf("speed" to speed, "Gyro-x" to gyrox, "Gyro-y" to gyroy, "Gyro-z" to gyroz, "Acc-x" to accx, "Acc-y" to accy, "Acc-z" to accz, "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
-                map.put(index, array as Map<String, String>)
-                index++
-                polyline?.add(LatLng(latitude!!, longitude!!))?.color(R.color.colorAccent)
-
-            }
-        }else{
-            //locationManager?.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 10L, 0f, locationListener)
-
-        }
-
-
-
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-
-    }
-*/
-    private fun updateMapUI(){
+    private fun updateMapUI() {
         gmap?.clear()
         gmap?.clear()
-
-
         gmap?.addMarker(
                 MarkerOptions().position(LatLng(latitude!!, longitude!!))
                         .title("My Position")
@@ -357,35 +257,30 @@ class SamplingActivity : AppCompatActivity() {
         gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
     }
 
-    private fun startTimer(){
-        timerStarted=System.currentTimeMillis()
-
+    private fun startTimer() {
+        timerStarted = System.currentTimeMillis()
     }
 
     //define the listener
     private val locationListener: LocationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             loc = location
-            longitude = if(loc?.longitude==null) 0.0 else loc?.longitude
-            altitude = if(loc?.altitude==null) 0.0 else loc?.altitude
-            latitude = if(loc?.latitude==null) 0.0 else loc?.latitude
-            if(longitude!=0.0 && latitude!= 0.0 && !locationObtained){
-                locationObtained=true
+            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+            if (longitude != 0.0 && latitude != 0.0 && !locationObtained) {
+                locationObtained = true
                 startScanning()
                 updateMapUI()
                 startTimer()
             }
         }
+
         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
         override fun onProviderEnabled(provider: String) {}
         override fun onProviderDisabled(provider: String) {}
 
     }
-
-
-
-
-
 
 
 }
