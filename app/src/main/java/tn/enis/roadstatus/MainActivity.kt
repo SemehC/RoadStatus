@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     }
     private fun requestPermissions()
     {
-        if(Utilities.hasLocationPermissions(this) && Utilities.hasStoragePermissions(this))
+        if(Utilities.hasAllPermissions(this))
         {
             return
         }
@@ -36,13 +36,13 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
             {
                 EasyPermissions.requestPermissions(this,"Il faut accepter les permissions pour utiliser cette application",
                         Constants.REQUEST_CODE_PERMISSION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.RECORD_AUDIO)
             }
             else
             {
                 EasyPermissions.requestPermissions(this,"Il faut accepter les permissions pour utiliser cette application",
                         Constants.REQUEST_CODE_PERMISSION,Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.ACCESS_BACKGROUND_LOCATION,Manifest.permission.RECORD_AUDIO)
             }
 
 
@@ -56,7 +56,8 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     override fun onPermissionsDenied(requestCode: Int, perms: MutableList<String>) {
         if(EasyPermissions.somePermissionPermanentlyDenied(this,perms))
         {
-            AppSettingsDialog.Builder(this).build().show()
+            AppSettingsDialog.Builder(this).setRationale("Il faut accepter tout les permissions " +
+                    "pour utiliser cette application, merci de les accepter manuellement !").build().show()
         }
         else
         {

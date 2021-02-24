@@ -3,12 +3,22 @@ package tn.enis.roadstatus
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.SurfaceTexture
+import android.hardware.Camera
 import android.hardware.Sensor
 import android.hardware.SensorManager
+import android.hardware.camera2.*
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.media.MediaRecorder
+
 import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
+import android.util.Log
+import android.view.Surface
+import android.view.TextureView
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +40,17 @@ import java.util.concurrent.TimeUnit
 
 
 class SamplingActivity : AppCompatActivity() {
+    private val cameraManager by lazy{
+        getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    }
+    private lateinit var backgroundThread: HandlerThread
+    private lateinit var backgroundHandler: Handler
+    private lateinit var cameraDevice: CameraDevice
+    private lateinit var captureRequestBuilder: CaptureRequest.Builder
+    private lateinit var captureSession: CameraCaptureSession
+    private val mediaRecorder by lazy{
+        MediaRecorder()
+    }
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
     var sensorManager: SensorManager? = null
@@ -59,11 +80,18 @@ class SamplingActivity : AppCompatActivity() {
     var locationObtained: Boolean = false
 
     var stillScanning: Boolean = true
+    lateinit var saveLocation: String
+    var appFolderPath:String ? = null
+    var folderName:String ? = null
+    var appFolder:File?=null
+    var filesFolder:File?=null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
+
+
         //Initializing Index and the end file
         index = 0
         endFile = ""
@@ -93,6 +121,7 @@ class SamplingActivity : AppCompatActivity() {
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
             GlobalScope.launch {
+                stopRecording()
                 saveFile()
             }
             stillScanning = false
@@ -103,38 +132,214 @@ class SamplingActivity : AppCompatActivity() {
 
     }
 
-
-    private suspend fun saveFile() {
-
-        val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
-        var filename: String = simpleDateFormat.format(Date()) + ".json"
-        val folder = this.getExternalFilesDir(null)?.absolutePath
-        val f = File(folder, "PFA")
-        val file = File(f.absolutePath + "/" + filename)
-
-        withContext(Dispatchers.IO){
-            while(!file.exists()){
-                if (!f.exists()) {
-                    f.mkdir()
-                } else {
-                    try {
-                        val gson = Gson()
-                        endFile += gson.toJson(map)
-                        val fw = FileWriter(file.absoluteFile)
-                        val bw = BufferedWriter(fw)
-                        bw.write(endFile.toString())
-                        bw.flush()
-                        bw.close()
-                    } catch (e: IOException) {
-                        e.printStackTrace()
-                        System.exit(-1)
-                    }
-                }
-            }
+    private val deviceStateCallback = object: CameraDevice.StateCallback() {
+        override fun onOpened(p0: CameraDevice) {
+            Log.d(TAG, "camera device opened")
+            if (p0 != null)
+                cameraDevice = p0
+            previewSession()
 
         }
 
+        override fun onDisconnected(p0: CameraDevice) {
+            Log.d(TAG, "camera device disconnected")
+            p0?.close()
+        }
+
+        override fun onError(p0: CameraDevice, p1: Int) {
+            Log.d(TAG, "camera device disconnected")
+            finish()
+        }
+
     }
+    private fun recordSession() {
+
+        setupMediaRecorder()
+
+        val surfaceTexture = videoPreview.surfaceTexture
+       // surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGHT)
+        val textureSurface = Surface(surfaceTexture)
+        val recordSurface = mediaRecorder.surface
+
+        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
+        captureRequestBuilder.addTarget(textureSurface)
+        captureRequestBuilder.addTarget(recordSurface)
+        val surfaces = arrayListOf<Surface>().apply {
+            add(textureSurface)
+            add(recordSurface)
+        }
+
+        cameraDevice.createCaptureSession(surfaces,
+            object: CameraCaptureSession.StateCallback(){
+                override fun onConfigureFailed(session: CameraCaptureSession) {
+                    Log.e(TAG, "creating record session failed!")
+                }
+
+                override fun onConfigured(session: CameraCaptureSession) {
+                    if (session != null) {
+                        captureSession = session
+                        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                        captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
+
+                        mediaRecorder.start()
+                    }
+                }
+
+            }, backgroundHandler)
+    }
+    private fun previewSession() {
+        try {
+
+            val surfaceTexture = videoPreview.surfaceTexture
+            val surface = Surface(surfaceTexture)
+            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            captureRequestBuilder.addTarget(surface)
+            cameraDevice.createCaptureSession(Arrays.asList(surface),
+                object: CameraCaptureSession.StateCallback() {
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        Log.e(TAG, "Failed to create capture session")
+                    }
+
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        if (session != null) {
+                            captureSession = session
+                            try {
+                                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                                captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
+                                recordSession()
+                            } catch (e: CameraAccessException) {
+                                Log.e(TAG, e.toString())
+                            }
+                        } else return
+                    }
+                }, null)
+
+        } catch (e: CameraAccessException) {
+            Log.e(TAG, e.toString())
+        }
+    }
+    private fun closeCamera() {
+        if (this::captureSession.isInitialized)
+            captureSession.close()
+        if (this::cameraDevice.isInitialized)
+            cameraDevice.close()
+    }
+    private fun startBackgroundThread() {
+        backgroundThread = HandlerThread("Camara2 Kotlin").also { it.start() }
+        backgroundHandler = Handler(backgroundThread.looper)
+    }
+    private fun stopBackgroundThread() {
+        backgroundThread.quitSafely()
+
+        try {
+            backgroundThread.join()
+        } catch (e: InterruptedException) {
+            Log.e(TAG, e.toString())
+        }
+    }
+    companion object {
+        private val TAG = SamplingActivity::class.qualifiedName
+        @JvmStatic fun newInstance() = SamplingActivity()
+    }
+    private fun openCamera() {
+
+    }
+    private fun <T> cameraCharacteristics(cameraId: String, key: CameraCharacteristics.Key<T>) : T {
+        val characteristics = cameraManager.getCameraCharacteristics(cameraId)
+        return when (key) {
+            CameraCharacteristics.LENS_FACING -> characteristics.get(key)!!
+            else -> throw  IllegalArgumentException("Key not recognized")
+        }
+    }
+    private val surfaceListener = object: TextureView.SurfaceTextureListener
+    {
+        override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
+            Log.d(TAG, "width: $p1 height: $p2")
+            openCamera()
+        }
+
+        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
+        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture) = true
+
+        override fun onSurfaceTextureUpdated(p0: SurfaceTexture) = Unit
+
+    }
+
+    private fun cameraId(lens: Int) : String {
+        var deviceId = listOf<String>()
+        try {
+            val cameraIdList = cameraManager.cameraIdList
+            deviceId = cameraIdList.filter { lens == cameraCharacteristics(it, CameraCharacteristics.LENS_FACING) }
+        } catch (e: CameraAccessException) {
+            Log.e(TAG, e.toString())
+        }
+        return deviceId[0]
+    }
+    @SuppressLint("MissingPermission")
+    private fun connectCamera() {
+        val deviceId = cameraId(CameraCharacteristics.LENS_FACING_BACK)
+        Log.e(TAG, "deviceId: $deviceId")
+        try {
+            cameraManager.openCamera(deviceId, deviceStateCallback, backgroundHandler)
+        } catch (e: CameraAccessException) {
+            Log.e(TAG, e.toString())
+        } catch (e: InterruptedException) {
+            Log.e(TAG, "Open camera device interrupted while opened")
+        }
+    }
+    @Throws(IOException::class)
+    protected fun setupMediaRecorder() {
+        appFolderPath = this.getExternalFilesDir(null)?.absolutePath
+        val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
+        folderName = simpleDateFormat.format(Date())
+        appFolder = File(appFolderPath, "PFA")
+        filesFolder = File(appFolder!!.absolutePath + "/" + folderName)
+        if (!appFolder?.exists()!!) {
+            appFolder?.mkdir()
+        } else {
+            if (!filesFolder!!.exists()) {
+                filesFolder!!.mkdir()
+            }
+        }
+        mediaRecorder.apply {
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(filesFolder!!.absolutePath+"/Recording.mp4")
+            setVideoEncodingBitRate(1000000)
+            setVideoFrameRate(30)
+            setVideoSize(1280,720)
+            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            prepare()
+        }
+    }
+    private fun stopRecording()
+    {
+        mediaRecorder.apply {
+            stop()
+            reset()
+        }
+    }
+    private suspend fun saveFile() {
+        val file = File(filesFolder!!.absolutePath + "/data.json")
+        withContext(Dispatchers.IO){
+            while(!file.exists()){
+
+                        try {
+                            val gson = Gson()
+                            endFile += gson.toJson(map)
+                            val fw = FileWriter(file.absoluteFile)
+                            val bw = BufferedWriter(fw)
+                            bw.write(endFile.toString())
+                            bw.flush()
+                            bw.close()
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            System.exit(-1)
+                        }
+                    }
+
+                }
+            }
 
     private fun startScanning() {
         GlobalScope.launch {
@@ -154,12 +359,19 @@ class SamplingActivity : AppCompatActivity() {
 
         sensorManager!!.registerListener(accManager, acc_sensor, SensorManager.SENSOR_DELAY_NORMAL)
         sensorManager!!.registerListener(gManager, gyro, SensorManager.SENSOR_DELAY_NORMAL)
-
+        startBackgroundThread()
+        if (videoPreview.isAvailable)
+            openCamera()
+        else
+            videoPreview.surfaceTextureListener = surfaceListener
 
     }
 
     override fun onPause() {
+
         super.onPause()
+        closeCamera()
+        stopBackgroundThread()
         mapView.onPause()
 
         sensorManager!!.unregisterListener(accManager)
@@ -284,6 +496,7 @@ class SamplingActivity : AppCompatActivity() {
                 startScanning()
                 updateMapUI()
                 startTimer()
+                connectCamera()
             }
         }
 
