@@ -92,37 +92,48 @@ class SamplingActivity : AppCompatActivity() {
         //Stop Button Clicked !!
         val bt = findViewById<Button>(R.id.stop_scan_bt)
         bt.setOnClickListener {
-            saveFile()
+            GlobalScope.launch {
+                saveFile()
+            }
             stillScanning = false
             startActivity(Intent(this, MainActivity::class.java))
-            finish()
+
         }
 
 
     }
 
 
-    private fun saveFile() {
+    private suspend fun saveFile() {
+
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
         var filename: String = simpleDateFormat.format(Date()) + ".json"
         val folder = this.getExternalFilesDir(null)?.absolutePath
         val f = File(folder, "PFA")
         val file = File(f.absolutePath + "/" + filename)
-        if (!f.exists()) {
-            f.mkdir()
-        } else {
-            try {
-                val gson = Gson()
-                endFile += gson.toJson(map)
-                val fw = FileWriter(file.absoluteFile)
-                val bw = BufferedWriter(fw)
-                bw.write(endFile.toString())
-                bw.close()
-            } catch (e: IOException) {
-                e.printStackTrace()
-                System.exit(-1)
+
+        withContext(Dispatchers.IO){
+            while(!file.exists()){
+                if (!f.exists()) {
+                    f.mkdir()
+                } else {
+                    try {
+                        val gson = Gson()
+                        endFile += gson.toJson(map)
+                        val fw = FileWriter(file.absoluteFile)
+                        val bw = BufferedWriter(fw)
+                        bw.write(endFile.toString())
+                        bw.flush()
+                        bw.close()
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        System.exit(-1)
+                    }
+                }
             }
+
         }
+
     }
 
     private fun startScanning() {
