@@ -623,7 +623,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     override fun onMapClick(p0: LatLng?) {
-        Toast.makeText(this,"Got location : [${p0.latitude},${p0.longitude}",Toast.LENGTH_SHORT).show()
+        Toast.makeText(this,"Got location : [${p0?.latitude},${p0?.longitude}",Toast.LENGTH_SHORT).show()
     }
 
     override fun onMapLongClick(p0: LatLng?) {
