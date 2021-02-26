@@ -6,6 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import tn.enis.roadstatus.other.Constants.DATABASE_NAME
 
 class DatabaseHandler {
 
@@ -30,8 +31,12 @@ class DatabaseHandler {
     }
 
     fun removeAllData(ctx: Context){
-        GlobalScope.launch(Dispatchers.IO){
+        val job = GlobalScope.launch(Dispatchers.IO){
             RoadStatusDatabase(ctx).getRoadStatusDAO().removeAllData()
+            ctx.deleteDatabase(DATABASE_NAME)
+        }
+        runBlocking {
+            job.join()
         }
     }
 

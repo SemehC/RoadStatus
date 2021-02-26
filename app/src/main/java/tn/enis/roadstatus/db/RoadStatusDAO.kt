@@ -13,6 +13,7 @@ interface RoadStatusDAO {
     fun deleteStatus(roadStatus: RoadStatus)
 
 
+
     @Query("DELETE FROM roads_statuses")
     suspend fun removeAllData()
 

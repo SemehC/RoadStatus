@@ -84,7 +84,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     var speedText: TextView? = null
     var timeText: TextView? = null
 
-    var samlplingDelay: Float = 1000F
+    var samlplingDelay: Long = 1000L
 
     var gManager: GyroscopeListener = GyroscopeListener()
     var accManager: AccelerometerListener = AccelerometerListener()
@@ -114,6 +114,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
 
+    private var startingPosition:LatLng?=null
+
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -139,7 +141,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
         // Getting location manager
-        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 0f, locationListener)
+        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 10f, locationListener)
 
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -509,8 +511,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         mapView?.onSaveInstanceState(outState)
     }
 
-    var oldtime: Long = 0
-    var x = 0f
 
     @SuppressLint("MissingPermission")
 
@@ -520,18 +520,12 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         while (stillScanning) {
             timer = System.currentTimeMillis() - timerStarted!!
-            var currentTime = System.currentTimeMillis()
-            if ((currentTime - oldtime) > samlplingDelay) {
-                oldtime = currentTime
-                gyroData = gManager.getData()
-                accData = accManager.getData()
-                gotData()
-                delay(500)
-            }
-
+            gyroData = gManager.getData()
+            accData = accManager.getData()
+            gotData()
+            delay(samlplingDelay)
         }
     }
-
 
     private fun saveToDatabase(fname:String){
         val r = RoadStatus()
@@ -541,30 +535,21 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         dbmanager.saveRoadStatus(r,this)
     }
 
-
     private fun gotData() {
-
         GlobalScope.launch {
             checkSpeed()
             addData()
             updateUI()
         }
     }
-
     private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
             if (loc?.hasSpeed() == true) {
                 speed = loc?.speed!!
-                if (speed < 9) samlplingDelay = 1000f
-                if (speed >= 9) samlplingDelay = 500f
-                if (speed > 16) samlplingDelay = 250f
-                if (speed > 27) samlplingDelay = 100f
             } else {
                 speed = 0f
-                samlplingDelay = 5000f
             }
         }
-
     }
 
     private suspend fun updateUI() {
@@ -572,29 +557,30 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             speedText?.text = (round(speed) * 3.6).toString() + " KM/H"
             timeText?.text = TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
-
     }
 
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
-            var array = mapOf("speed" to speed * 3.6, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+            var array = mapOf("speed" to round(speed * 3.6), "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
             map[index] = array as Map<String, String>
             index++
-
-            polyline?.add(LatLng(latitude!!, longitude!!))
         }
     }
 
 
     private fun updateMapUI() {
         gmap?.clear()
-        gmap?.clear()
         gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!, longitude!!))
-                        .title("My Position")
+                startingPosition?.let {
+                    MarkerOptions().position(it)
+                            .title("Initial Position")
+                }
+        )
+        gmap?.addMarker(
+                MarkerOptions().position(LatLng(latitude!!,longitude!!)).title("Current Position")
         )
         gmap?.addPolyline(polyline)
-        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
+
     }
 
     private fun startTimer() {
@@ -609,10 +595,17 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
             if (longitude != 0.0 && latitude != 0.0 && !locationObtained) {
+                //startingPosition= latitude?.let { longitude?.let { it1 -> LatLng(it, it1) } }
+                startingPosition = LatLng(latitude!!,longitude!!)
                 locationObtained = true
+                gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
                 startScanning()
                 updateMapUI()
                 startTimer()
+            }
+            if(locationObtained){
+                polyline?.add(LatLng(latitude!!, longitude!!))
+                updateMapUI()
             }
         }
 

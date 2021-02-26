@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import tn.enis.roadstatus.other.Constants.DATABASE_NAME
 import javax.inject.Singleton
 
 @Database(
@@ -29,7 +30,7 @@ abstract class RoadStatusDatabase: RoomDatabase() {
         private fun buildDatabase(context: Context) = Room.databaseBuilder(
                 context.applicationContext,
                 RoadStatusDatabase::class.java,
-                "roadsdb"
+                DATABASE_NAME
         ).build()
 
     }
