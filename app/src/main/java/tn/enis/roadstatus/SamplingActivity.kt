@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.SurfaceTexture
+import android.graphics.drawable.BitmapDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.*
@@ -27,9 +28,7 @@ import androidx.core.view.isVisible
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
@@ -48,6 +47,7 @@ import kotlin.math.round
 @Suppress("DEPRECATION")
 class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener {
 
+    private var marker: Marker?=null
     private val dbmanager by lazy {
         DatabaseHandler()
     }
@@ -102,9 +102,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     var recordNumber: Int = 0
     val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
-    }
-    val imageButton: ImageButton by lazy {
-        findViewById(R.id.imageButton2)
     }
     val startStopRecording: ImageButton by lazy {
         findViewById(R.id.recordVideoButton)
@@ -161,10 +158,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         }
 
-        //Take a picture
-        imageButton.setOnClickListener {
-            capturePicture()
-        }
 
         //Record or stop the recording
         startStopRecording.setOnClickListener {
@@ -190,9 +183,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     startStopRecording.isEnabled = false
                     startStopRecording.isClickable = false
                     startStopRecording.isVisible = false
-                    imageButton.isVisible = false
-                    imageButton.isEnabled = false
-                    imageButton.isClickable = false
+
                     openCameraButton.setImageResource(android.R.drawable.presence_video_online)
                     Toast.makeText(this, "Camera closed !", Toast.LENGTH_SHORT).show()
                 } else {
@@ -201,9 +192,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     startStopRecording.isEnabled = true
                     startStopRecording.isClickable = true
                     startStopRecording.isVisible = true
-                    imageButton.isVisible = true
-                    imageButton.isEnabled = true
-                    imageButton.isClickable = true
+
                     openCameraButton.setImageResource(android.R.drawable.presence_video_busy)
                     Toast.makeText(this, "Camera opened !", Toast.LENGTH_SHORT).show()
                 }
@@ -221,9 +210,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
     private fun initUI() {
-        imageButton.isVisible = false
-        imageButton.isEnabled = false
-        imageButton.isClickable = false
+
         startStopRecording.isVisible = false
         startStopRecording.isEnabled = false
         startStopRecording.isClickable = false
@@ -588,7 +575,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     private fun updateMapUI() {
         gmap?.clear()
-        gmap?.clear()
         gmap?.addMarker(
                 MarkerOptions().position(LatLng(latitude!!, longitude!!))
                         .title("My Position")
@@ -623,10 +609,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     override fun onMapClick(p0: LatLng?) {
-        Toast.makeText(this,"Got location : [${p0?.latitude},${p0?.longitude}",Toast.LENGTH_SHORT).show()
     }
 
-    override fun onMapLongClick(p0: LatLng?) {
+    override fun onMapLongClick(position: LatLng?) {
+        marker?.remove()
+        marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
 
     }
 
