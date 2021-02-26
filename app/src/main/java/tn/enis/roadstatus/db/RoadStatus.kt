@@ -13,8 +13,6 @@ import org.json.JSONObject
 data class RoadStatus(
 
         var date: Long = 0L,
-        var distance: Float=0f,
-        var avg_speed: Float=0f,
         var total_time: Long=0L,
         var file_name: String?=null
 ) {

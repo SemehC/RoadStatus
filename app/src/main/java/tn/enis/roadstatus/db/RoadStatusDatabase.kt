@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import javax.inject.Singleton
 
 @Database(
         entities = [RoadStatus::class],
@@ -11,6 +12,7 @@ import androidx.room.RoomDatabase
 )
 abstract class RoadStatusDatabase: RoomDatabase() {
 
+    @Singleton
     abstract fun getRoadStatusDAO():RoadStatusDAO
 
     companion object {

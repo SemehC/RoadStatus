@@ -1,12 +1,20 @@
 package tn.enis.roadstatus
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.forEach
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -21,20 +29,27 @@ import tn.enis.roadstatus.other.Utilities
 
 class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
 
+    var lin_layout:LinearLayout?=null
+    var roads:List<RoadStatus>?=null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
 
+
+        lin_layout = findViewById(R.id.lin_layout)
         //Testing room db
 
-        val r =RoadStatus()
-        var roads:List<RoadStatus>?=null
-        r.date=22
-        r.avg_speed=22f
-        r.distance=22f
-        r.file_name="test"
-        r.total_time=22
+
+        roads = DatabaseHandler().getAllRoadStatus(this)
+
+
+        roads?.let { addDataToView(it) }
+
+        val rmbt = findViewById<Button>(R.id.rm_data)
+        rmbt.setOnClickListener {
+            confirmDeleteAll()
+        }
 
         val bt = findViewById<Button>(R.id.start_scan_bt)
         bt.setOnClickListener {
@@ -44,6 +59,62 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
         }
         requestPermissions()
     }
+
+
+    private fun addDataToView(roads:List<RoadStatus>){
+        lin_layout?.removeAllViews()
+        roads.forEach { h->
+            val item = TextView(this)
+            item.text=h.file_name
+            item.setOnClickListener {
+                clickedOnItem(h.id)
+            }
+            lin_layout?.addView(item)
+        }
+    }
+
+
+    private fun clickedOnItem(id:Int){
+        Toast.makeText(this,"Clicked on id : $id",Toast.LENGTH_SHORT).show()
+    }
+
+
+    private fun confirmDeleteAll(){
+        val builder = AlertDialog.Builder(this@MainActivity)
+
+        // Set the alert dialog title
+        builder.setTitle("App background color")
+
+        // Display a message on alert dialog
+        builder.setMessage("Are you want to delete all data?")
+
+        // Set a positive button and its click listener on alert dialog
+        builder.setPositiveButton("YES"){dialog, which ->
+            // Do something when user press the positive button
+            removeAllData()
+        }
+
+
+        // Display a negative button on alert dialog
+        builder.setNegativeButton("No"){dialog,which ->
+            Toast.makeText(applicationContext,"Canceled.",Toast.LENGTH_SHORT).show()
+        }
+
+
+        // Finally, make the alert dialog using builder
+        val dialog: AlertDialog = builder.create()
+
+        // Display the alert dialog on app interface
+        dialog.show()
+    }
+
+    private fun removeAllData(){
+        DatabaseHandler().removeAllData(this)
+        Toast.makeText(this,"Remove all entries",Toast.LENGTH_SHORT).show()
+        roads = DatabaseHandler().getAllRoadStatus(this)
+        roads?.let { addDataToView(it) }
+    }
+
     private fun requestPermissions()
     {
         if(Utilities.hasAllPermissions(this))

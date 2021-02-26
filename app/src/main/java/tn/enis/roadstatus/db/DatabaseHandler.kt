@@ -1,6 +1,7 @@
 package tn.enis.roadstatus.db
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -11,10 +12,11 @@ class DatabaseHandler {
 
 
     fun saveRoadStatus(roadStatus: RoadStatus, ctx:Context){
+
         GlobalScope.launch(Dispatchers.IO) {
             RoadStatusDatabase(ctx).getRoadStatusDAO().insertStatus(roadStatus)
-
         }
+
     }
     fun getAllRoadStatus(ctx: Context):List<RoadStatus>?{
         var roadsStatuses:List<RoadStatus>?=null
@@ -25,6 +27,12 @@ class DatabaseHandler {
             job.join()
         }
         return roadsStatuses
+    }
+
+    fun removeAllData(ctx: Context){
+        GlobalScope.launch(Dispatchers.IO){
+            RoadStatusDatabase(ctx).getRoadStatusDAO().removeAllData()
+        }
     }
 
 

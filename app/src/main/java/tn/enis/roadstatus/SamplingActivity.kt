@@ -26,12 +26,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
+import tn.enis.roadstatus.db.DatabaseHandler
+import tn.enis.roadstatus.db.RoadStatus
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -43,7 +46,12 @@ import kotlin.math.round
 
 
 @Suppress("DEPRECATION")
-class SamplingActivity : AppCompatActivity() {
+class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener {
+
+    private val dbmanager by lazy {
+        DatabaseHandler()
+    }
+
     private val cameraManager by lazy {
         getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
@@ -62,7 +70,7 @@ class SamplingActivity : AppCompatActivity() {
     var loc: Location? = null
     var speed: Float = 0f
     var index: Int = 0
-    var endFile: String? = null
+    var endFile: String=""
     var map = mutableMapOf<Int, Map<String, String>>()
 
     var gmap: GoogleMap? = null
@@ -112,9 +120,6 @@ class SamplingActivity : AppCompatActivity() {
         setContentView(R.layout.activity_scanning)
 
 
-        //Initializing Index and the end file
-        index = 0
-        endFile = ""
         //Initializing Location Manager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
@@ -123,9 +128,14 @@ class SamplingActivity : AppCompatActivity() {
         timeText = findViewById(R.id.time_text_view)
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
+        mapView.isClickable=true
         mapView.getMapAsync {
             gmap = it
+            gmap?.setOnMapClickListener(this)
+            gmap?.setOnMapLongClickListener(this)
+            gmap?.setOnCameraIdleListener(this)
         }
+
 
 
         // Getting location manager
@@ -139,7 +149,7 @@ class SamplingActivity : AppCompatActivity() {
 
         //Stop Button Clicked !!
         stopButton.setOnClickListener {
-            GlobalScope.launch {
+            GlobalScope.launch(Dispatchers.Default) {
                 if (isRecording) {
                     stopRecording()
                     isRecording = false
@@ -208,6 +218,7 @@ class SamplingActivity : AppCompatActivity() {
 
 
     }
+
 
     private fun initUI() {
         imageButton.isVisible = false
@@ -384,6 +395,9 @@ class SamplingActivity : AppCompatActivity() {
         appFolderPath = this.getExternalFilesDir(null)?.absolutePath
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
         folderName = simpleDateFormat.format(Date())
+
+        saveToDatabase(folderName)
+
         appFolder = File(appFolderPath, "PFA")
         filesFolder = File(appFolder!!.absolutePath, folderName)
         if (!appFolder?.exists()!!) {
@@ -416,6 +430,8 @@ class SamplingActivity : AppCompatActivity() {
             reset()
         }
     }
+
+
 
     private suspend fun saveFile() {
         val file = File(filesFolder!!.absolutePath + "/data.json")
@@ -517,6 +533,15 @@ class SamplingActivity : AppCompatActivity() {
     }
 
 
+    private fun saveToDatabase(fname:String){
+        val r = RoadStatus()
+        r.total_time = timer
+        r.date = timerStarted!!
+        r.file_name=fname
+        dbmanager.saveRoadStatus(r,this)
+    }
+
+
     private fun gotData() {
 
         GlobalScope.launch {
@@ -596,6 +621,20 @@ class SamplingActivity : AppCompatActivity() {
         override fun onProviderDisabled(provider: String) {}
 
     }
+
+    override fun onMapClick(p0: LatLng?) {
+        Toast.makeText(this,"Got location : [${p0.latitude},${p0.longitude}",Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onMapLongClick(p0: LatLng?) {
+
+    }
+
+    override fun onCameraIdle() {
+
+    }
+
+
 
 
 }

@@ -12,6 +12,10 @@ interface RoadStatusDAO {
     @Delete
     fun deleteStatus(roadStatus: RoadStatus)
 
+
+    @Query("DELETE FROM roads_statuses")
+    suspend fun removeAllData()
+
     @Query("SELECT * FROM roads_statuses")
     suspend fun getAllStatuses():List<RoadStatus>
 
