@@ -10,9 +10,9 @@ interface RoadStatusDAO {
     suspend fun insertStatus(roadStatus: RoadStatus)
 
     @Delete
-    suspend fun deleteStatus(roadStatus: RoadStatus)
+    fun deleteStatus(roadStatus: RoadStatus)
 
     @Query("SELECT * FROM roads_statuses")
-    fun getAllStatuses():LiveData<List<RoadStatus>>
+    suspend fun getAllStatuses():List<RoadStatus>
 
 }

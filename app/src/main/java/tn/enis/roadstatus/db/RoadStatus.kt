@@ -11,12 +11,13 @@ import org.json.JSONObject
 
 @Entity(tableName = "roads_statuses")
 data class RoadStatus(
-    var date: Long = 0L,
-    var distance: Float=0f,
-    var avg_speed: Float=0f,
-    var total_time: Long=0L,
-    var file_name: String?=null
+
+        var date: Long = 0L,
+        var distance: Float=0f,
+        var avg_speed: Float=0f,
+        var total_time: Long=0L,
+        var file_name: String?=null
 ) {
-    @PrimaryKey(autoGenerate = true)
-    var id:Int?=null
+        @PrimaryKey(autoGenerate = true)
+        var id:Int = 0
 }

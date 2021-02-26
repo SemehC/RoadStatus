@@ -39,6 +39,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.round
 
 
 @Suppress("DEPRECATION")
@@ -543,7 +544,7 @@ class SamplingActivity : AppCompatActivity() {
 
     private suspend fun updateUI() {
         withContext(Dispatchers.Main) {
-            speedText?.text = (speed * 3.6).toString() + " KM/H"
+            speedText?.text = (round(speed) * 3.6).toString() + " KM/H"
             timeText?.text = TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
 

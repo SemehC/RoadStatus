@@ -4,10 +4,17 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
+import tn.enis.roadstatus.db.DatabaseHandler
+import tn.enis.roadstatus.db.RoadStatus
+import tn.enis.roadstatus.db.RoadStatusDatabase
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Utilities
 
@@ -17,6 +24,18 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+
+        //Testing room db
+
+        val r =RoadStatus()
+        var roads:List<RoadStatus>?=null
+        r.date=22
+        r.avg_speed=22f
+        r.distance=22f
+        r.file_name="test"
+        r.total_time=22
+
         val bt = findViewById<Button>(R.id.start_scan_bt)
         bt.setOnClickListener {
             val intent = Intent(this, SamplingActivity::class.java)
