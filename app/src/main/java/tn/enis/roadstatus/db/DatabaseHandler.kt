@@ -19,6 +19,7 @@ class DatabaseHandler {
         }
 
     }
+
     fun getAllRoadStatus(ctx: Context):List<RoadStatus>?{
         var roadsStatuses:List<RoadStatus>?=null
         val job = GlobalScope.launch(Dispatchers.IO){
