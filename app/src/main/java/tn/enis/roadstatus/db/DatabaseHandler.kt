@@ -14,8 +14,12 @@ class DatabaseHandler {
 
     fun saveRoadStatus(roadStatus: RoadStatus, ctx:Context){
 
-        GlobalScope.launch(Dispatchers.IO) {
+
+        val job = GlobalScope.launch(Dispatchers.IO) {
             RoadStatusDatabase(ctx).getRoadStatusDAO().insertStatus(roadStatus)
+        }
+        runBlocking {
+            job.join()
         }
 
     }
@@ -31,10 +35,24 @@ class DatabaseHandler {
         return roadsStatuses
     }
 
-    fun removeAllData(ctx: Context){
+
+
+    fun getLastInsertedId(ctx:Context):Int{
+        var id:Int=-1
         val job = GlobalScope.launch(Dispatchers.IO){
-            RoadStatusDatabase(ctx).getRoadStatusDAO().removeAllData()
-            ctx.deleteDatabase(DATABASE_NAME)
+            id = RoadStatusDatabase(ctx).getRoadStatusDAO().getLastInsertedId()
+
+        }
+        runBlocking {
+            job.join()
+        }
+        return id
+    }
+
+    fun removeItemById(ctx:Context,id:Int){
+
+        val job = GlobalScope.launch(Dispatchers.IO){
+            RoadStatusDatabase(ctx).getRoadStatusDAO().removeDataById(id)
         }
         runBlocking {
             job.join()

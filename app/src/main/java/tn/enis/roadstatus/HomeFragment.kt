@@ -1,6 +1,7 @@
 package tn.enis.roadstatus
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -9,55 +10,67 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.core.view.marginBottom
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.android.synthetic.main.fragment_home.*
 import tn.enis.roadstatus.db.Converters
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
-    var lin_layout: LinearLayout?=null
+
     var roads:List<RoadStatus>?=null
+    val arrayList = ArrayList<RoadStatusItem>()
+
+
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        lin_layout = view.findViewById(R.id.lin_layout)
 
-        roads = DatabaseHandler().getAllRoadStatus(view.context)
 
-        roads?.let { addDataToView(it) }
-
-        val rmbt = view.findViewById<Button>(R.id.rm_data2)
-        rmbt.setOnClickListener {
-            confirmDeleteAll()
+        swiperefresh.setOnRefreshListener {
+            Toast.makeText(view?.context,"Refreshed",Toast.LENGTH_SHORT).show()
+            loadData()
+            swiperefresh.isRefreshing=false
         }
 
-        val bt = view.findViewById<Button>(R.id.start_scan_bt2)
-        bt.setOnClickListener {
-            val intent = Intent(view.context, SamplingActivity::class.java)
-            startActivity(intent)
 
-        }
+        loadData()
+
 
     }
 
-    private fun addDataToView(roads:List<RoadStatus>){
+    private fun loadData(){
+        roads = DatabaseHandler().getAllRoadStatus(view?.context!!)
 
-        roads.forEach { h->
-
-            var txt = TextView(view?.context)
-            txt.text=h.file_name
+        prepareData(roads!!)
 
 
+        val myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!)
 
-            txt.setOnClickListener {
-                clickedOnItem(h.id)
-            }
-            lin_layout?.addView(txt)
+        recyclerView.layoutManager = LinearLayoutManager(view?.context)
+        recyclerView.adapter = myAdapter
+    }
+
+    private fun prepareData(roads:List<RoadStatus>){
+        arrayList.clear()
+        roads.forEach {
+            val date = Date(it.date)
+            val format = SimpleDateFormat("yyyy.MM.dd HH:mm")
+            arrayList.add(RoadStatusItem(it.id,it.label!!,format.format(date).toString(),it.img,it.file_name!!))
         }
     }
+
+
 
     private fun clickedOnItem(id:Int){
         Toast.makeText(view?.context,"Clicked on id : $id", Toast.LENGTH_SHORT).show()
@@ -76,7 +89,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Set a positive button and its click listener on alert dialog
         builder.setPositiveButton("YES"){dialog, which ->
             // Do something when user press the positive button
-            removeAllData()
+
         }
 
 
@@ -93,11 +106,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         dialog.show()
     }
 
-    private fun removeAllData(){
-        DatabaseHandler().removeAllData(view?.context!!)
-        Toast.makeText(view?.context,"Remove all entries",Toast.LENGTH_SHORT).show()
-        roads = DatabaseHandler().getAllRoadStatus(view?.context!!)
-        roads?.let { addDataToView(it) }
-    }
+
 
 }

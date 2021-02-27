@@ -2,21 +2,24 @@ package tn.enis.roadstatus.db
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 
+@TypeConverters
 class Converters {
 
-
-    fun toBitmap(bytes:String):Bitmap{
-        val b=bytes.toByteArray()
-        return BitmapFactory.decodeByteArray(b,0,b.size)
+    @TypeConverter
+    fun toBitmap(bytes:ByteArray):Bitmap{
+        return BitmapFactory.decodeByteArray(bytes,0,bytes.size)
     }
 
-    fun fromBitmap(bmp:Bitmap):String{
+    @TypeConverter
+    fun fromBitmap(bmp:Bitmap):ByteArray{
         val outputStream = ByteArrayOutputStream()
         bmp.compress(Bitmap.CompressFormat.PNG,100,outputStream)
-        return outputStream.toByteArray().toString()
+        return outputStream.toByteArray()
     }
 
 }

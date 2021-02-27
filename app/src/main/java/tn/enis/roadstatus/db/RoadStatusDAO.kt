@@ -20,4 +20,10 @@ interface RoadStatusDAO {
     @Query("SELECT * FROM roads_statuses")
     suspend fun getAllStatuses():List<RoadStatus>
 
+    @Query("SELECT id FROM roads_statuses ORDER BY date DESC")
+    suspend fun getLastInsertedId():Int
+
+    @Query("DELETE FROM roads_statuses WHERE id=:data_id")
+    suspend fun removeDataById(data_id:Int)
+
 }

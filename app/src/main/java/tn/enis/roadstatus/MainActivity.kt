@@ -59,6 +59,11 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
                         replace(R.id.fragmentContainer,profileFragment).commit()
                     }
                 }
+                R.id.start_scanning ->{
+                    val intent = Intent(this, SamplingActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
                 R.id.navigation_stats -> {
                 }
             }

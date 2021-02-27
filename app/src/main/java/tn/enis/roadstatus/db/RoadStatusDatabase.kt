@@ -12,7 +12,7 @@ import javax.inject.Singleton
         entities = [RoadStatus::class],
         version = 1
 )
-
+@TypeConverters(Converters::class)
 abstract class RoadStatusDatabase: RoomDatabase() {
 
     @Singleton

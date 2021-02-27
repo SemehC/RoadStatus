@@ -34,6 +34,7 @@ import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
+import tn.enis.roadstatus.db.Converters
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import java.io.BufferedWriter
@@ -152,6 +153,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         //Stop Button Clicked !!
         stopButton.setOnClickListener {
+            saveToDatabase(folderName)
             GlobalScope.launch(Dispatchers.Default) {
                 if (isRecording) {
                     stopRecording()
@@ -161,7 +163,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             }
             stillScanning = false
             startActivity(Intent(this, MainActivity::class.java))
-
+            finish()
         }
 
 
@@ -389,7 +391,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
         folderName = simpleDateFormat.format(Date())
 
-        saveToDatabase(folderName)
+
 
         appFolder = File(appFolderPath, "PFA")
         filesFolder = File(appFolder!!.absolutePath, folderName)
@@ -520,9 +522,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private fun saveToDatabase(fname: String) {
 
 
-        val r: RoadStatus = RoadStatus(timerStarted!!, timer, calculatePolylineLength(polyline), fname)
-        dbmanager.saveRoadStatus(r, this)
-
+        gmap?.snapshot {
+            val r: RoadStatus = RoadStatus("Scan",it,timerStarted!!, timer, 69f, fname)
+            dbmanager.saveRoadStatus(r, this)
+            println("Done Saving ")
+        }
 
     }
 
@@ -550,7 +554,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             timeText?.text = TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
     }
-
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
             var array = mapOf("speed" to round(speed * 3.6), "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
@@ -558,7 +561,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             index++
         }
     }
-
 
     private fun updateMapUI() {
 
@@ -683,6 +685,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         return distance
     }
 
+    override fun onBackPressed() {
+        Toast.makeText(this,"Back button disabled",Toast.LENGTH_SHORT).show()
+    }
 
 }
 

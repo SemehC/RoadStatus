@@ -11,6 +11,8 @@ import org.json.JSONObject
 
 @Entity(tableName = "roads_statuses")
 data class RoadStatus(
+        val label:String,
+        var img:Bitmap,
         var date: Long = 0L,
         var total_time: Long=0L,
         var total_distance:Float,
@@ -19,4 +21,5 @@ data class RoadStatus(
 ) {
         @PrimaryKey(autoGenerate = true)
         var id:Int = 0
+
 }
