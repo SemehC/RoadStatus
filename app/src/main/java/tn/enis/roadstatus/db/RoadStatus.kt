@@ -11,10 +11,11 @@ import org.json.JSONObject
 
 @Entity(tableName = "roads_statuses")
 data class RoadStatus(
-
         var date: Long = 0L,
         var total_time: Long=0L,
+        var total_distance:Float,
         var file_name: String?=null
+
 ) {
         @PrimaryKey(autoGenerate = true)
         var id:Int = 0

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import tn.enis.roadstatus.other.Constants.DATABASE_NAME
 import javax.inject.Singleton
 
@@ -11,6 +12,7 @@ import javax.inject.Singleton
         entities = [RoadStatus::class],
         version = 1
 )
+
 abstract class RoadStatusDatabase: RoomDatabase() {
 
     @Singleton

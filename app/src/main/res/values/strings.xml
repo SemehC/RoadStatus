@@ -2,4 +2,6 @@
     <string name="app_name">Road Status</string>
     <string name="maps_api_key">AIzaSyB0xr5peRqDNM8k2LdEDrLWXQ4lqhFEkiQ</string>
     <string name="speed">%1$d K/H</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

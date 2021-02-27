@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.SurfaceTexture
-import android.graphics.drawable.BitmapDrawable
 import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.*
@@ -27,11 +26,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
+import tn.enis.roadstatus.db.Converters
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import java.io.BufferedWriter
@@ -515,11 +514,12 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     private fun saveToDatabase(fname:String){
-        val r = RoadStatus()
-        r.total_time = timer
-        r.date = timerStarted!!
-        r.file_name=fname
+
+
+        val r:RoadStatus = RoadStatus(timerStarted!!,timer,calculatePolylineLength(polyline),fname)
         dbmanager.saveRoadStatus(r,this)
+
+
     }
 
     private fun gotData() {
@@ -613,6 +613,28 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     override fun onCameraIdle() {
 
+    }
+
+    fun calculatePolylineLength(polyline: PolylineOptions?):Float{
+        var distance=0f
+        if (polyline != null) {
+            for(i in 0.. polyline.points.size-2){
+                val pos1 = polyline.points[i]
+                val pos2 = polyline.points[i+1]
+
+                val result = FloatArray(1)
+
+                Location.distanceBetween(
+                        pos1.latitude,pos1.longitude,
+                        pos2.latitude,pos2.longitude,
+                        result
+                )
+
+                distance+=result[0]
+
+            }
+        }
+        return distance
     }
 
 
