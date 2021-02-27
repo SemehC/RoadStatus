@@ -13,7 +13,6 @@ class GyroscopeListener : SensorEventListener {
     private var gyroz = 0.0
     override fun onSensorChanged(event: SensorEvent?) {
         if (event != null) {
-            Log.d("Gyroscope", event.values[0].toString())
             gyrox = ((event.values[0] * 180) / PI)
             gyroy = ((event.values[1] * 180) / PI)
             gyroz = ((event.values[2] * 180) / PI)

@@ -19,6 +19,7 @@ object Utilities {
     fun hasStoragePermissions(context : Context) = EasyPermissions.hasPermissions(context,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE)
     fun hasCameraPermissions(context : Context) = EasyPermissions.hasPermissions(context,Manifest.permission.CAMERA)
     fun hasMicPermission(context : Context) = EasyPermissions.hasPermissions(context,Manifest.permission.RECORD_AUDIO)
-    fun hasAllPermissions(context: Context) = hasStoragePermissions(context) && hasCameraPermissions(context) && hasLocationPermissions(context) && hasMicPermission(context)
+    fun hasInternetPermission(context : Context) = EasyPermissions.hasPermissions(context,Manifest.permission.INTERNET)
+    fun hasAllPermissions(context: Context) = hasStoragePermissions(context)&&hasInternetPermission(context) && hasCameraPermissions(context) && hasLocationPermissions(context) && hasMicPermission(context)
 
 }

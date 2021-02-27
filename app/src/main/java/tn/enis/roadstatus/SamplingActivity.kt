@@ -11,7 +11,6 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.media.MediaRecorder
-
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -24,13 +23,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import com.android.volley.Request
+import com.android.volley.toolbox.StringRequest
+import com.android.volley.toolbox.Volley
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
-import tn.enis.roadstatus.db.Converters
+import org.json.JSONArray
+import org.json.JSONObject
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import java.io.BufferedWriter
@@ -46,7 +49,7 @@ import kotlin.math.round
 @Suppress("DEPRECATION")
 class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener {
 
-    private var marker: Marker?=null
+    private var marker: Marker? = null
     private val dbmanager by lazy {
         DatabaseHandler()
     }
@@ -62,6 +65,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private val mediaRecorder by lazy {
         MediaRecorder()
     }
+    private lateinit var jsonResponse : String
+    var url: String? = null
     var isRecording = false
     var acc_sensor: Sensor? = null
     var gyro: Sensor? = null
@@ -69,11 +74,12 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     var loc: Location? = null
     var speed: Float = 0f
     var index: Int = 0
-    var endFile: String=""
+    var endFile: String = ""
     var map = mutableMapOf<Int, Map<String, String>>()
 
     var gmap: GoogleMap? = null
     var polyline: PolylineOptions? = PolylineOptions()
+    var pathPolyLine : PolylineOptions ?  = PolylineOptions()
     var longitude: Double? = 0.0
     var altitude: Double? = 0.0
     var latitude: Double? = 0.0
@@ -109,8 +115,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         findViewById(R.id.cameraButton)
     }
 
-
-    private var startingPosition:LatLng?=null
+    private lateinit var pathPoints : JSONArray
+    private var startingPosition: LatLng? = null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -126,18 +132,17 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         timeText = findViewById(R.id.time_text_view)
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
-        mapView.isClickable=true
+        mapView.isClickable = true
         mapView.getMapAsync {
             gmap = it
             gmap?.setOnMapClickListener(this)
             gmap?.setOnMapLongClickListener(this)
             gmap?.setOnCameraIdleListener(this)
+
         }
 
-
-
         // Getting location manager
-        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 10f, locationListener)
+        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 20f, locationListener)
 
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -420,7 +425,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
 
-
     private suspend fun saveFile() {
         val file = File(filesFolder!!.absolutePath + "/data.json")
         withContext(Dispatchers.IO) {
@@ -513,11 +517,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
     }
 
-    private fun saveToDatabase(fname:String){
+    private fun saveToDatabase(fname: String) {
 
 
-        val r:RoadStatus = RoadStatus(timerStarted!!,timer,calculatePolylineLength(polyline),fname)
-        dbmanager.saveRoadStatus(r,this)
+        val r: RoadStatus = RoadStatus(timerStarted!!, timer, calculatePolylineLength(polyline), fname)
+        dbmanager.saveRoadStatus(r, this)
 
 
     }
@@ -529,6 +533,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             updateUI()
         }
     }
+
     private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
             if (loc?.hasSpeed() == true) {
@@ -556,7 +561,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
     private fun updateMapUI() {
-        gmap?.clear()
+
         gmap?.addMarker(
                 startingPosition?.let {
                     MarkerOptions().position(it)
@@ -564,9 +569,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                 }
         )
         gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!,longitude!!)).title("Current Position")
+                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
         )
-        gmap?.addPolyline(polyline)
+       // gmap?.addPolyline(polyline)
+
+        gmap?.addPolyline(pathPolyLine)
 
     }
 
@@ -583,14 +590,14 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
             if (longitude != 0.0 && latitude != 0.0 && !locationObtained) {
                 //startingPosition= latitude?.let { longitude?.let { it1 -> LatLng(it, it1) } }
-                startingPosition = LatLng(latitude!!,longitude!!)
+                startingPosition = LatLng(latitude!!, longitude!!)
                 locationObtained = true
                 gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
                 startScanning()
                 updateMapUI()
                 startTimer()
             }
-            if(locationObtained){
+            if (locationObtained) {
                 polyline?.add(LatLng(latitude!!, longitude!!))
                 updateMapUI()
             }
@@ -606,38 +613,75 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     override fun onMapLongClick(position: LatLng?) {
+        url = "https://api.tomtom.com/routing/1/calculateRoute/"
         marker?.remove()
         marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        url += "${loc?.longitude},${loc?.latitude}:${position?.longitude},${position?.latitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
+        // var response = URL(url).readText()
 
+
+
+        pathPolyLine = request(url!!)
+        updateMapUI()
+
+
+    }
+
+    fun request(url: String):PolylineOptions? {
+        val queue = Volley.newRequestQueue(this)
+    // Request a string response from the provided URL.
+        val stringRequest = StringRequest(Request.Method.GET, url,
+                { response ->
+                    var jsonObject = JSONObject(response)
+                    val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
+                    pathPoints = jsonArray.getJSONObject(0)
+                            .getJSONArray("legs")
+                            .getJSONObject(0)
+                            .getJSONArray("points")
+                    for(i in 0 until pathPoints.length())
+                    {
+                        var lat = pathPoints.getJSONObject(i).get("latitude") as Double
+                        var lon = pathPoints.getJSONObject(i).get("longitude") as Double
+                        println("Point : $lat , $lon")
+                        pathPolyLine?.add(LatLng(lat,lon))
+                    }
+
+
+                },
+                { Log.d("reponse", "Something went wrong") })
+
+    // Add the request to the RequestQueue.
+
+        queue.add(stringRequest)
+        println("sent $url")
+        return pathPolyLine
     }
 
     override fun onCameraIdle() {
 
     }
 
-    fun calculatePolylineLength(polyline: PolylineOptions?):Float{
-        var distance=0f
+    fun calculatePolylineLength(polyline: PolylineOptions?): Float {
+        var distance = 0f
         if (polyline != null) {
-            for(i in 0.. polyline.points.size-2){
+            for (i in 0..polyline.points.size - 2) {
                 val pos1 = polyline.points[i]
-                val pos2 = polyline.points[i+1]
+                val pos2 = polyline.points[i + 1]
 
                 val result = FloatArray(1)
 
                 Location.distanceBetween(
-                        pos1.latitude,pos1.longitude,
-                        pos2.latitude,pos2.longitude,
+                        pos1.latitude, pos1.longitude,
+                        pos2.latitude, pos2.longitude,
                         result
                 )
 
-                distance+=result[0]
+                distance += result[0]
 
             }
         }
         return distance
     }
-
-
 
 
 }
