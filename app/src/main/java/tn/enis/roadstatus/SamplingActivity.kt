@@ -55,7 +55,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var lastKnownLocation: Location? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private var marker: Marker? = null
-    private val dbmanager by lazy {
+    private val dbManager by lazy {
         DatabaseHandler()
     }
 
@@ -70,56 +70,55 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private val mediaRecorder by lazy {
         MediaRecorder()
     }
-    private lateinit var jsonResponse: String
-    var url: String? = null
-    var isRecording = false
-    var acc_sensor: Sensor? = null
-    var gyro: Sensor? = null
-    var sensorManager: SensorManager? = null
-    var loc: Location? = null
-    var speed: Float = 0f
-    var index: Int = 0
-    var endFile: String = ""
-    var map = mutableMapOf<Int, Map<String, String>>()
+    private var url: String? = null
+    private var isRecording = false
+    private var accSensor: Sensor? = null
+    private var gyro: Sensor? = null
+    private var sensorManager: SensorManager? = null
+    private var loc: Location? = null
+    private var speed: Float = 0f
+    private var index: Int = 0
+    private var endFile: String = ""
+    private var map = mutableMapOf<Int, Map<String, String>>()
 
-    var gmap: GoogleMap? = null
-    var polyline: PolylineOptions? = PolylineOptions()
-    var pathPolyLine: PolylineOptions? = PolylineOptions()
-    var p: Polyline? = null
+    private var gmap: GoogleMap? = null
+    private var polyline: PolylineOptions? = PolylineOptions()
+    private var pathPolyLine: PolylineOptions? = PolylineOptions()
+    private var p: Polyline? = null
 
 
-    var longitude: Double? = 0.0
-    var altitude: Double? = 0.0
-    var latitude: Double? = 0.0
+    private var longitude: Double? = 0.0
+    private var altitude: Double? = 0.0
+    private var latitude: Double? = 0.0
 
-    var timerStarted: Long? = 0L
-    var timer: Long = 0L
-    var speedText: TextView? = null
-    var timeText: TextView? = null
+    private var timerStarted: Long? = 0L
+    private var timer: Long = 0L
+    private var speedText: TextView? = null
+    private var timeText: TextView? = null
 
-    var samlplingDelay: Long = 1000L
+    private var samlplingDelay: Long = 1000L
 
-    var gManager: GyroscopeListener = GyroscopeListener()
-    var accManager: AccelerometerListener = AccelerometerListener()
+    private var gManager: GyroscopeListener = GyroscopeListener()
+    private var accManager: AccelerometerListener = AccelerometerListener()
 
-    var locationManager: LocationManager? = null
-    var locationObtained: Boolean = false
+    private var locationManager: LocationManager? = null
+    private var locationObtained: Boolean = false
 
-    var stillScanning: Boolean = true
+    private var stillScanning: Boolean = true
 
-    var appFolderPath: String? = null
-    lateinit var folderName: String
-    var appFolder: File? = null
-    var filesFolder: File? = null
-    var cameraIsOpened = false
-    var recordNumber: Int = 0
-    val stopButton: Button by lazy {
+    private var appFolderPath: String? = null
+    private lateinit var folderName: String
+    private var appFolder: File? = null
+    private var filesFolder: File? = null
+    private var cameraIsOpened = false
+    private var recordNumber: Int = 0
+    private val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
     }
-    val startStopRecording: ImageButton by lazy {
+    private val startStopRecording: ImageButton by lazy {
         findViewById(R.id.recordVideoButton)
     }
-    val openCameraButton: ImageButton by lazy {
+    private val openCameraButton: ImageButton by lazy {
         findViewById(R.id.cameraButton)
     }
 
@@ -157,7 +156,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         updateLocation()
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        accSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         gyro = sensorManager!!.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
 
@@ -495,7 +494,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         super.onResume()
         mapView.onResume()
 
-        sensorManager!!.registerListener(accManager, acc_sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager!!.registerListener(accManager, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
         sensorManager!!.registerListener(gManager, gyro, SensorManager.SENSOR_DELAY_NORMAL)
         startBackgroundThread()
         if (videoPreview.isAvailable)
@@ -555,7 +554,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         gmap?.snapshot {
             val r: RoadStatus = RoadStatus("Scan", it, timerStarted!!, timer, 69f, fname)
-            dbmanager.saveRoadStatus(r, this)
+            dbManager.saveRoadStatus(r, this)
             println("Done Saving ")
         }
 
