@@ -9,7 +9,6 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.camera2.*
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -51,7 +50,7 @@ import kotlin.math.round
 @Suppress("DEPRECATION")
 class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback {
 
-    private val locationRequest: LocationRequest? = null
+    private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
     private var lastKnownLocation: Location? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
@@ -155,19 +154,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
         // Getting location manager
         // locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 20f, locationListener)
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-                locationResult ?: return
-                for (location in locationResult.locations) {
-                    loc = location
-                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                    polyline?.add(LatLng(latitude!!, longitude!!))
-                    updateMapUI()
-                }
-            }
-        }
+        updateLocation()
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         acc_sensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
@@ -237,6 +224,26 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         createFolders()
 
 
+    }
+
+    private fun updateLocation() {
+        locationRequest = LocationRequest.create()
+        locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        locationRequest?.interval = 50
+        locationRequest?.fastestInterval = 10
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                locationResult ?: return
+                for (location in locationResult.locations) {
+                    loc = location
+                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                    polyline?.add(LatLng(latitude!!, longitude!!))
+                    updateMapUI()
+                }
+            }
+        }
     }
 
 
@@ -599,16 +606,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     }
             )
         }
-        cp = if (cp == null) {
-            gmap?.addMarker(
-                    MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
-            )
-        } else {
-            cp.remove()
-            gmap?.addMarker(
-                    MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
-            )
-        }
+        cp?.remove()
+        cp = gmap?.addMarker(
+                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+        )
+
 
         // gmap?.addPolyline(polyline)
 
@@ -694,9 +696,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
-        locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.interval = 50
-        locationRequest?.fastestInterval = 10
+
         fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
                 locationCallback,
                 null)
