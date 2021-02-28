@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import tn.enis.roadstatus.MainActivity
 import tn.enis.roadstatus.R
 import tn.enis.roadstatus.RoadStatusItem
 import tn.enis.roadstatus.RoadStatusItemAdapter
@@ -29,6 +30,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     val arrayList = ArrayList<RoadStatusItem>()
     lateinit var myAdapter: RoadStatusItemAdapter
 
+    var mainActivity:MainActivity?=null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -41,7 +43,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
 
         prepareData()
-        myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!)
+        myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!,mainActivity!!)
         recyclerView.layoutManager = LinearLayoutManager(view?.context)
         recyclerView.adapter = myAdapter
 
@@ -58,7 +60,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
         swiperefresh.isRefreshing=false
     }
-
 
 
 

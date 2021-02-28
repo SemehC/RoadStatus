@@ -26,4 +26,7 @@ interface RoadStatusDAO {
     @Query("DELETE FROM roads_statuses WHERE id=:data_id")
     suspend fun removeDataById(data_id:Int)
 
+    @Query("SELECT * FROM roads_statuses WHERE id=:data_id")
+    suspend fun getDataById(data_id: Int):RoadStatus
+
 }

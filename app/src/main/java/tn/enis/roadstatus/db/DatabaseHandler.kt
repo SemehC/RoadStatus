@@ -59,6 +59,17 @@ class DatabaseHandler {
         }
     }
 
+    fun getItemById(ctx:Context,id:Int):RoadStatus?{
+        var res:RoadStatus?=null
+        val job = GlobalScope.launch(Dispatchers.IO) {
+            res = RoadStatusDatabase(ctx).getRoadStatusDAO().getDataById(id)
+        }
+        runBlocking {
+            job.join()
+        }
+        return res
+    }
+
 
 
 }

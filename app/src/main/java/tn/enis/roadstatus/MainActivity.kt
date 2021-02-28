@@ -4,12 +4,14 @@ import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.fragments.ProfileFragment
+import tn.enis.roadstatus.fragments.RoadStatusItemFragment
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Utilities
 
@@ -19,13 +21,15 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
 
 
 
-
+    val itemFragment = RoadStatusItemFragment()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         val homeFragment = HomeFragment()
         val profileFragment = ProfileFragment()
+
+        homeFragment.mainActivity=this
 
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragmentContainer,homeFragment).commit()
@@ -63,13 +67,12 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     }
 
 
-
-
-
-
-
-
-
+    fun openRoadStatusItem(id:Int){
+        itemFragment.id=id
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragmentContainer,itemFragment).commit()
+        }
+    }
 
 
 

@@ -1,6 +1,9 @@
 package tn.enis.roadstatus
 
+import android.app.Activity
+import android.app.ActivityManager
 import android.content.Context
+import android.text.TextUtils.replace
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,11 +13,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.road_status_item.view.*
 import tn.enis.roadstatus.db.DatabaseHandler
+import tn.enis.roadstatus.fragments.HomeFragment
+import tn.enis.roadstatus.fragments.ProfileFragment
+import tn.enis.roadstatus.fragments.RoadStatusItemFragment
 import java.io.File
 
-class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context):
+class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {
-
 
     class ViewHolder(itemView: View):RecyclerView.ViewHolder(itemView){
 
@@ -32,11 +37,12 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+
         holder.itemView.road_status_item_image.animation = AnimationUtils.loadAnimation(context,R.anim.fade_transition_animation)
         holder.itemView.road_status_item.animation = AnimationUtils.loadAnimation(context,R.anim.fade_scale_animation)
         holder.bindItems(arrayList[position])
         holder.itemView.setOnClickListener {
-            Toast.makeText(context,arrayList[position].id.toString(),Toast.LENGTH_SHORT).show()
+            itemClicked(arrayList[position].id)
         }
 
         holder.itemView.setOnLongClickListener {
@@ -82,6 +88,9 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
 
+    fun itemClicked(id:Int){
+        mainActivity.openRoadStatusItem(id)
+    }
 
 
 }
