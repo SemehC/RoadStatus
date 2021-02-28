@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +32,8 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.itemView.road_status_item_image.animation = AnimationUtils.loadAnimation(context,R.anim.fade_transition_animation)
+        holder.itemView.road_status_item.animation = AnimationUtils.loadAnimation(context,R.anim.fade_scale_animation)
         holder.bindItems(arrayList[position])
         holder.itemView.setOnClickListener {
             Toast.makeText(context,arrayList[position].id.toString(),Toast.LENGTH_SHORT).show()

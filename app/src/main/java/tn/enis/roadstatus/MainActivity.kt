@@ -1,30 +1,15 @@
 package tn.enis.roadstatus
 
 import android.Manifest
-import android.content.DialogInterface
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.forEach
-import androidx.fragment.app.FragmentContainer
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
-import tn.enis.roadstatus.db.DatabaseHandler
-import tn.enis.roadstatus.db.RoadStatus
-import tn.enis.roadstatus.db.RoadStatusDatabase
+import tn.enis.roadstatus.fragments.HomeFragment
+import tn.enis.roadstatus.fragments.ProfileFragment
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Utilities
 
