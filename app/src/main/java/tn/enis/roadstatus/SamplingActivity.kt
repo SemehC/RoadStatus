@@ -1,6 +1,6 @@
 package tn.enis.roadstatus
 
-import android.annotation.SuppressLint
+import  android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -227,6 +227,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     private fun updateLocation() {
+        var prevLocation:Location?=null
+        val distanceBetweenPositions:FloatArray?=null
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest?.interval = 50
@@ -235,12 +237,37 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.locations.last()
-                longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
-                polyline?.add(LatLng(latitude!!, longitude!!))
-                updateMapUI()
+                if(prevLocation==null){
+                    prevLocation=loc
+                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                    speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
+                    polyline?.add(LatLng(latitude!!, longitude!!))
+                }
+                else{
+                    try {
+                        Location.distanceBetween(prevLocation!!.latitude,prevLocation!!.longitude,loc!!.latitude,loc!!.longitude,distanceBetweenPositions)
+                    }catch(e:Exception) {
+                        distanceBetweenPositions?.set(0, 0f)
+                    }
+                    if(distanceBetweenPositions!=null){
+                        if(distanceBetweenPositions?.get(0)!! >20f){
+                            setCurrentPositionMarker()
+                            println("Distance between positions:"+distanceBetweenPositions?.get(0)!!)
+                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                            speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
+                            polyline?.add(LatLng(latitude!!, longitude!!))
+                            prevLocation=loc
+                        }
+                    }
+
+                }
+
+
+
             }
         }
     }
@@ -593,6 +620,14 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
     }
 
+
+    private fun setCurrentPositionMarker(){
+        cp?.remove()
+        cp = gmap?.addMarker(
+                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+        )
+    }
+
     private fun updateMapUI() {
         if (im == null) {
             im = gmap?.addMarker(
@@ -602,10 +637,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     }
             )
         }
-        cp?.remove()
-        cp = gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
-        )
+
 
 
         gmap?.addPolyline(polyline)
