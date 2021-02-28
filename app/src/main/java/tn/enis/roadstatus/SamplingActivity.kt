@@ -3,6 +3,7 @@ package tn.enis.roadstatus
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.SurfaceTexture
 import android.hardware.Sensor
 import android.hardware.SensorManager
@@ -34,7 +35,6 @@ import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
-import tn.enis.roadstatus.db.Converters
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import java.io.BufferedWriter
@@ -81,6 +81,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     var gmap: GoogleMap? = null
     var polyline: PolylineOptions? = PolylineOptions()
     var pathPolyLine : PolylineOptions ?  = PolylineOptions()
+    var p:Polyline?=null
+
+
     var longitude: Double? = 0.0
     var altitude: Double? = 0.0
     var latitude: Double? = 0.0
@@ -511,6 +514,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private suspend fun scanning() {
 
         while (stillScanning) {
+
             timer = System.currentTimeMillis() - timerStarted!!
             gyroData = gManager.getData()
             accData = accManager.getData()
@@ -563,19 +567,31 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     private fun updateMapUI() {
+        var im:Marker?=null
+        var cp:Marker?=null
 
-        gmap?.addMarker(
-                startingPosition?.let {
-                    MarkerOptions().position(it)
-                            .title("Initial Position")
-                }
-        )
-        gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
-        )
+        if(im==null){
+            im = gmap?.addMarker(
+                    startingPosition?.let {
+                        MarkerOptions().position(it)
+                                .title("Initial Position")
+                    }
+            )
+        }
+        cp = if(cp==null){
+            gmap?.addMarker(
+                    MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+            )
+        }else{
+            cp.remove()
+            gmap?.addMarker(
+                    MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+            )
+        }
+
        // gmap?.addPolyline(polyline)
 
-        gmap?.addPolyline(pathPolyLine)
+
 
     }
 
@@ -590,8 +606,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+            println("current location:$loc")
             if (longitude != 0.0 && latitude != 0.0 && !locationObtained) {
-                //startingPosition= latitude?.let { longitude?.let { it1 -> LatLng(it, it1) } }
+
                 startingPosition = LatLng(latitude!!, longitude!!)
                 locationObtained = true
                 gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
@@ -618,24 +635,28 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         url = "https://api.tomtom.com/routing/1/calculateRoute/"
         marker?.remove()
         marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
-        url += "${loc?.longitude},${loc?.latitude}:${position?.longitude},${position?.latitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
+        url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
         // var response = URL(url).readText()
 
+        println("url:$url")
 
 
-        pathPolyLine = request(url!!)
+        request(url!!)
         updateMapUI()
 
 
     }
 
-    fun request(url: String):PolylineOptions? {
+    fun request(url: String) {
+
+
         val queue = Volley.newRequestQueue(this)
     // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,
                 { response ->
                     var jsonObject = JSONObject(response)
                     val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
+                    pathPolyLine = PolylineOptions().color(Color.BLUE)
                     pathPoints = jsonArray.getJSONObject(0)
                             .getJSONArray("legs")
                             .getJSONObject(0)
@@ -647,7 +668,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                         println("Point : $lat , $lon")
                         pathPolyLine?.add(LatLng(lat,lon))
                     }
-
+                    p?.remove()
+                    p = gmap?.addPolyline(pathPolyLine)
+                    updateMapUI()
 
                 },
                 { Log.d("reponse", "Something went wrong") })
@@ -656,34 +679,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         queue.add(stringRequest)
         println("sent $url")
-        return pathPolyLine
     }
 
     override fun onCameraIdle() {
 
     }
 
-    fun calculatePolylineLength(polyline: PolylineOptions?): Float {
-        var distance = 0f
-        if (polyline != null) {
-            for (i in 0..polyline.points.size - 2) {
-                val pos1 = polyline.points[i]
-                val pos2 = polyline.points[i + 1]
 
-                val result = FloatArray(1)
-
-                Location.distanceBetween(
-                        pos1.latitude, pos1.longitude,
-                        pos2.latitude, pos2.longitude,
-                        result
-                )
-
-                distance += result[0]
-
-            }
-        }
-        return distance
-    }
 
     override fun onBackPressed() {
         Toast.makeText(this,"Back button disabled",Toast.LENGTH_SHORT).show()

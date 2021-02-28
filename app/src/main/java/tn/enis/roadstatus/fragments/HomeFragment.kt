@@ -39,14 +39,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
 
 
-        if(roads!!.size==0){
-            Toast.makeText(view?.context,"No items yet",Toast.LENGTH_SHORT).show()
-        }else{
-            prepareData()
-            myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!)
-            recyclerView.layoutManager = LinearLayoutManager(view?.context)
-            recyclerView.adapter = myAdapter
-        }
+
+        prepareData()
+        myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!)
+        recyclerView.layoutManager = LinearLayoutManager(view?.context)
+        recyclerView.adapter = myAdapter
+
 
     }
 
