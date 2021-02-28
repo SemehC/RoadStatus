@@ -124,6 +124,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     private lateinit var pathPoints: JSONArray
     private var startingPosition: LatLng? = null
+    private var im: Marker? = null
+    private var cp: Marker? = null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,8 +153,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         // Construct a FusedLocationProviderClient.
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-        // Getting location manager
-        // locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0L, 20f, locationListener)
+
         updateLocation()
         //Getting Sensors Manager
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -233,14 +234,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
-                for (location in locationResult.locations) {
-                    loc = location
-                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                    polyline?.add(LatLng(latitude!!, longitude!!))
-                    updateMapUI()
-                }
+                loc = locationResult.locations.last()
+                longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
+                polyline?.add(LatLng(latitude!!, longitude!!))
+                updateMapUI()
             }
         }
     }
@@ -568,7 +568,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
     }
 
-    private suspend fun checkSpeed() {
+   private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
             if (loc?.hasSpeed() == true) {
                 speed = loc?.speed!!
@@ -594,9 +594,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     private fun updateMapUI() {
-        var im: Marker? = null
-        var cp: Marker? = null
-
         if (im == null) {
             im = gmap?.addMarker(
                     startingPosition?.let {
@@ -611,7 +608,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         )
 
 
-        // gmap?.addPolyline(polyline)
+        gmap?.addPolyline(polyline)
 
 
     }
@@ -622,6 +619,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
+        startingPosition = null
         val locationResult = fusedLocationProviderClient?.lastLocation
         locationResult?.addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
@@ -639,40 +637,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     updateMapUI()
                     startTimer()
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                            LatLng(lastKnownLocation!!.latitude,
-                                    lastKnownLocation!!.longitude), 20f))
+                            LatLng(loc!!.latitude,
+                                    loc!!.longitude), 20f))
                 }
             }
         }
     }
     //define the listener
-    /* private val locationListener: LocationListener = object : LocationListener {
-         override fun onLocationChanged(location: Location) {
-             loc = location
-             longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-             println("current location:$loc")
-             if (longitude != 0.0 && latitude != 0.0 && !locationObtained) {
-
-                 startingPosition = LatLng(latitude!!, longitude!!)
-                 locationObtained = true
-                 gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!, longitude!!), 20.0f))
-                 startScanning()
-                 updateMapUI()
-                 startTimer()
-             }
-             if (locationObtained) {
-                 polyline?.add(LatLng(latitude!!, longitude!!))
-                 updateMapUI()
-             }
-         }
-
-         override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
-         override fun onProviderEnabled(provider: String) {}
-         override fun onProviderDisabled(provider: String) {}
-
-     }*/
 
     override fun onMapClick(p0: LatLng?) {
     }
