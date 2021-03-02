@@ -1,20 +1,13 @@
 package tn.enis.roadstatus.fragments
 
-import android.media.Image
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.View
-import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import tn.enis.roadstatus.MainActivity
 import tn.enis.roadstatus.R
-import tn.enis.roadstatus.RoadStatusItem
+import tn.enis.roadstatus.other.RoadStatusItem
 import tn.enis.roadstatus.RoadStatusItemAdapter
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus

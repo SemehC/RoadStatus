@@ -1,4 +1,4 @@
-package tn.enis.roadstatus
+package tn.enis.roadstatus.listeners
 
 import android.hardware.Sensor
 import android.hardware.SensorEvent

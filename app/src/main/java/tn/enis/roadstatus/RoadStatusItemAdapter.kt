@@ -1,9 +1,6 @@
 package tn.enis.roadstatus
 
-import android.app.Activity
-import android.app.ActivityManager
 import android.content.Context
-import android.text.TextUtils.replace
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,10 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.road_status_item.view.*
 import tn.enis.roadstatus.db.DatabaseHandler
-import tn.enis.roadstatus.fragments.HomeFragment
-import tn.enis.roadstatus.fragments.ProfileFragment
-import tn.enis.roadstatus.fragments.RoadStatusItemFragment
-import java.io.File
+import tn.enis.roadstatus.other.RoadStatusItem
 
 class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {

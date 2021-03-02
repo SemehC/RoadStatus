@@ -37,6 +37,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
+import tn.enis.roadstatus.listeners.AccelerometerListener
+import tn.enis.roadstatus.listeners.GyroscopeListener
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -222,12 +224,10 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
         initUI()
         createFolders()
-
-
     }
+    var prevLocation:Location?=null
 
     private fun updateLocation() {
-        var prevLocation:Location?=null
         val distanceBetweenPositions:FloatArray?=null
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
@@ -252,9 +252,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                         distanceBetweenPositions?.set(0, 0f)
                     }
                     if(distanceBetweenPositions!=null){
+                        println("Distance between positions : "+distanceBetweenPositions?.get(0))
                         if(distanceBetweenPositions?.get(0)!! >20f){
                             setCurrentPositionMarker()
-                            println("Distance between positions:"+distanceBetweenPositions?.get(0)!!)
                             longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
@@ -263,10 +263,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                             prevLocation=loc
                         }
                     }
-
                 }
-
-
+                setCurrentPositionMarker()
+                setPolyLineOnMap()
 
             }
         }
@@ -289,19 +288,19 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         override fun onOpened(p0: CameraDevice) {
 
 
-            Log.d(TAG, "camera device opened")
+
             cameraDevice = p0
             previewSession()
 
         }
 
         override fun onDisconnected(p0: CameraDevice) {
-            Log.d(TAG, "camera device disconnected")
+
             p0.close()
         }
 
         override fun onError(p0: CameraDevice, p1: Int) {
-            Log.d(TAG, "camera device disconnected")
+
             finish()
         }
 
@@ -408,7 +407,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     private val surfaceListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-            Log.d(TAG, "width: $p1 height: $p2")
+
         }
 
         override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
@@ -580,9 +579,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
         gmap?.snapshot {
-            val r: RoadStatus = RoadStatus("Scan", it, timerStarted!!, timer, 69f, fname)
-            dbManager.saveRoadStatus(r, this)
-            println("Done Saving ")
+            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, timer, 69f, fname), this)
+
         }
 
     }
@@ -637,11 +635,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     }
             )
         }
-
-
-
         gmap?.addPolyline(polyline)
+    }
 
+    var trajectoryPolyLine:Polyline?=null
+    private fun setPolyLineOnMap(){
+        trajectoryPolyLine?.remove()
+        trajectoryPolyLine = gmap?.addPolyline(polyline)
 
     }
 
@@ -687,7 +687,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
         // var response = URL(url).readText()
 
-        println("url:$url")
 
 
         request(url!!)
@@ -721,7 +720,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     for (i in 0 until pathPoints.length()) {
                         var lat = pathPoints.getJSONObject(i).get("latitude") as Double
                         var lon = pathPoints.getJSONObject(i).get("longitude") as Double
-                        println("Point : $lat , $lon")
+
                         pathPolyLine?.add(LatLng(lat, lon))
                     }
                     p?.remove()
@@ -729,12 +728,14 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     updateMapUI()
 
                 },
-                { Log.d("reponse", "Something went wrong") })
+                {
+
+                })
 
         // Add the request to the RequestQueue.
 
         queue.add(stringRequest)
-        println("sent $url")
+
     }
 
     override fun onCameraIdle() {
