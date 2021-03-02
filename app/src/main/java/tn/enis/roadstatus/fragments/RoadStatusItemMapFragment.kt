@@ -84,7 +84,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
                         .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.RED)))?.tag=i
             }else{
                 gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Position").snippet(info)
-                        .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.RED)))?.tag=i
+                        .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.BLUE)))?.tag=i
             }
 
 
