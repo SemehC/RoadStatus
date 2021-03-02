@@ -39,7 +39,7 @@ class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
         super.onViewCreated(view, savedInstanceState)
 
         roadStatusItemMapFragment.id=id
-
+        roadStatusItemInfoFragment.id=id
 
         childFragmentManager.beginTransaction()?.apply {
             replace(R.id.road_status_item_fragment_container,roadStatusItemInfoFragment).commit()
@@ -74,6 +74,10 @@ class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
 
 
     }
+
+
+
+
 
 
 

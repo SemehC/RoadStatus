@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
         bottomNavigation.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.navigation_home -> {
+
                     supportFragmentManager.beginTransaction().apply {
                         replace(R.id.fragmentContainer,homeFragment).commit()
                     }

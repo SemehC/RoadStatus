@@ -70,6 +70,15 @@ class DatabaseHandler {
         return res
     }
 
+    fun changeLabelName(ctx:Context,label:String,id:Int){
+        val job = GlobalScope.launch(Dispatchers.IO) {
+            RoadStatusDatabase(ctx).getRoadStatusDAO().updateLabelById(label,id)
+        }
+        runBlocking {
+            job.join()
+        }
+    }
+
 
 
 }

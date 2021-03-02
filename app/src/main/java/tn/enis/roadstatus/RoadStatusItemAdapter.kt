@@ -10,9 +10,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.road_status_item.view.*
 import tn.enis.roadstatus.db.DatabaseHandler
+import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.other.RoadStatusItem
 
-class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity):
+class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity,val homeFragment: HomeFragment):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View):RecyclerView.ViewHolder(itemView){
@@ -60,6 +61,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         // Set a positive button and its click listener on alert dialog
         builder.setPositiveButton("YES"){dialog, which ->
             DatabaseHandler().removeItemById(context,id)
+            homeFragment.refresh()
             //to fix , [REMOVE ACTUAL FOLDER AND FILES ]
         }
 

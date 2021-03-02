@@ -501,10 +501,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                 locationCallback,
                 null)
     }
-
     fun request(url: String) {
-
-
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,

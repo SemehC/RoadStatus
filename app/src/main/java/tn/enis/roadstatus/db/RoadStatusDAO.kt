@@ -29,4 +29,7 @@ interface RoadStatusDAO {
     @Query("SELECT * FROM roads_statuses WHERE id=:data_id")
     suspend fun getDataById(data_id: Int):RoadStatus
 
+    @Query("UPDATE roads_statuses SET label=:data_label WHERE id=:data_id")
+    suspend fun updateLabelById(data_label:String,data_id:Int)
+
 }
