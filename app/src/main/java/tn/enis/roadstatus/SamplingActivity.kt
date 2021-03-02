@@ -546,6 +546,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         getDeviceLocation()
     }
 
+    override fun onDestroy() {
+        gmap?.clear()
+        mapView.onDestroy()
+        super.onDestroy()
+    }
 }
 
 

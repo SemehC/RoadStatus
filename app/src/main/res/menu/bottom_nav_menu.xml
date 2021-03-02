@@ -25,4 +25,10 @@
         android:title="Statistics"
         />
 
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/settings_nav_icon"
+        android:title="Settings"
+        />
+
 </menu>

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
 
 import kotlinx.android.synthetic.main.fragment_road_status_item_map.*
@@ -27,13 +28,13 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     var gmap: GoogleMap? = null
     var currentRoadStatus: RoadStatus?=null
     var roadStatusData: JSONObject?=null
-
+    var mapView:MapView?=null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        road_status_item_mapView.onCreate(savedInstanceState)
-        road_status_item_mapView.isClickable = true
-        road_status_item_mapView.getMapAsync {
+        mapView = view?.findViewById(R.id.road_status_item_mapView)
+        mapView?.onCreate(savedInstanceState)
+        mapView?.isClickable = true
+        mapView?.getMapAsync {
             gmap = it
             gmap?.setOnMapLoadedCallback(this)
             gmap?.setOnMapClickListener(this)
@@ -164,7 +165,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
     override fun onMapLoaded() {
         gmap?.setOnMarkerClickListener(this)
-        setDataToMap()
+        //setDataToMap()
     }
 
     override fun onMarkerClick(p0: Marker?): Boolean {
@@ -191,5 +192,11 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         return true
     }
 
+    override fun onDestroyView() {
+        gmap?.clear()
+        mapView?.onDestroy()
+        mapView?.removeAllViews()
+        super.onDestroyView()
+    }
 
 }
