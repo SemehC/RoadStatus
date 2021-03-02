@@ -4,19 +4,15 @@ import  android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.SurfaceTexture
+
 import android.hardware.Sensor
 import android.hardware.SensorManager
-import android.hardware.camera2.*
+
 import android.location.Location
 import android.location.LocationManager
-import android.media.MediaRecorder
+
 import android.os.Bundle
-import android.os.Handler
-import android.os.HandlerThread
-import android.util.Log
-import android.view.Surface
-import android.view.TextureView
+
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
@@ -61,17 +57,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         DatabaseHandler()
     }
 
-    private val cameraManager by lazy {
-        getSystemService(Context.CAMERA_SERVICE) as CameraManager
-    }
-    private lateinit var backgroundThread: HandlerThread
-    private lateinit var backgroundHandler: Handler
-    private lateinit var cameraDevice: CameraDevice
-    private lateinit var captureRequestBuilder: CaptureRequest.Builder
-    private lateinit var captureSession: CameraCaptureSession
-    private val mediaRecorder by lazy {
-        MediaRecorder()
-    }
+
     private var url: String? = null
     private var isRecording = false
     private var accSensor: Sensor? = null
@@ -113,7 +99,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var appFolder: File? = null
     private var filesFolder: File? = null
     private var cameraIsOpened = false
-    private var recordNumber: Int = 0
+
     private val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
     }
@@ -128,12 +114,20 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var startingPosition: LatLng? = null
     private var im: Marker? = null
     private var cp: Marker? = null
+    private var trajectoryPolyLine: Polyline? = null
+    private lateinit var gyroData: Array<Double>
+    private lateinit var accData: Array<Double>
+    private var prevLocation: Location? = null
+    private var deviceCameraManager: DeviceCameraManager? = null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
+        createFolders()
 
+        //Initializing Camera Manager
+        deviceCameraManager = DeviceCameraManager(filesFolder!!, this, videoPreview)
 
         //Initializing Location Manager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
@@ -141,6 +135,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         //Getting Text views
         speedText = findViewById(R.id.speed_text_view)
         timeText = findViewById(R.id.time_text_view)
+
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
         mapView.isClickable = true
@@ -168,7 +163,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             saveToDatabase(folderName)
             GlobalScope.launch(Dispatchers.Default) {
                 if (isRecording) {
-                    stopRecording()
+                    deviceCameraManager!!.stopRecording()
                     isRecording = false
                 }
                 saveFile()
@@ -178,16 +173,15 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             finish()
         }
 
-
         //Record or stop the recording
         startStopRecording.setOnClickListener {
             if (isRecording) {
-                stopRecording()
-                previewSession()
+                deviceCameraManager!!.stopRecording()
+                deviceCameraManager!!.previewSession()
                 startStopRecording.setImageResource(android.R.drawable.presence_online)
                 Toast.makeText(this, "Stopped recording !", Toast.LENGTH_SHORT).show()
             } else {
-                recordSession()
+                deviceCameraManager!!.recordSession()
                 startStopRecording.setImageResource(android.R.drawable.ic_notification_overlay)
                 Toast.makeText(this, "Started recording !", Toast.LENGTH_SHORT).show()
             }
@@ -198,7 +192,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         openCameraButton.setOnClickListener {
             if (!isRecording) {
                 if (cameraIsOpened) {
-                    closeCamera()
+                    deviceCameraManager!!.closeCamera()
                     videoPreview.isVisible = false
                     startStopRecording.isEnabled = false
                     startStopRecording.isClickable = false
@@ -208,7 +202,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     Toast.makeText(this, "Camera closed !", Toast.LENGTH_SHORT).show()
                 } else {
                     videoPreview.isVisible = true
-                    connectCamera()
+                    deviceCameraManager!!.connectCamera()
                     startStopRecording.isEnabled = true
                     startStopRecording.isClickable = true
                     startStopRecording.isVisible = true
@@ -223,12 +217,11 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         }
         initUI()
-        createFolders()
     }
-    var prevLocation:Location?=null
+
 
     private fun updateLocation() {
-        val distanceBetweenPositions:FloatArray?=null
+        val distanceBetweenPositions: FloatArray? = null
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest?.interval = 50
@@ -237,30 +230,29 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.locations.last()
-                if(prevLocation==null){
-                    prevLocation=loc
+                if (prevLocation == null) {
+                    prevLocation = loc
                     longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                     altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                     latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                    speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
+                    speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                     polyline?.add(LatLng(latitude!!, longitude!!))
-                }
-                else{
+                } else {
                     try {
-                        Location.distanceBetween(prevLocation!!.latitude,prevLocation!!.longitude,loc!!.latitude,loc!!.longitude,distanceBetweenPositions)
-                    }catch(e:Exception) {
+                        Location.distanceBetween(prevLocation!!.latitude, prevLocation!!.longitude, loc!!.latitude, loc!!.longitude, distanceBetweenPositions)
+                    } catch (e: Exception) {
                         distanceBetweenPositions?.set(0, 0f)
                     }
-                    if(distanceBetweenPositions!=null){
-                        println("Distance between positions : "+distanceBetweenPositions?.get(0))
-                        if(distanceBetweenPositions?.get(0)!! >20f){
+                    if (distanceBetweenPositions != null) {
+                        println("Distance between positions : " + distanceBetweenPositions.get(0))
+                        if (distanceBetweenPositions.get(0) > 20f) {
                             setCurrentPositionMarker()
                             longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                            speed = if (loc!!.hasSpeed()) (loc!!.speed*3.6).toFloat() else 0f
+                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                             polyline?.add(LatLng(latitude!!, longitude!!))
-                            prevLocation=loc
+                            prevLocation = loc
                         }
                     }
                 }
@@ -279,167 +271,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         startStopRecording.isClickable = false
     }
 
-    private fun capturePicture() {
-
-    }
-
-    //Get camera state (opened / disconnected / error)
-    private val deviceStateCallback = object : CameraDevice.StateCallback() {
-        override fun onOpened(p0: CameraDevice) {
-
-
-
-            cameraDevice = p0
-            previewSession()
-
-        }
-
-        override fun onDisconnected(p0: CameraDevice) {
-
-            p0.close()
-        }
-
-        override fun onError(p0: CameraDevice, p1: Int) {
-
-            finish()
-        }
-
-    }
-
-    // Record the video output taken by camera
-    private fun recordSession() {
-
-        setupMediaRecorder()
-
-        val surfaceTexture = videoPreview.surfaceTexture
-        val textureSurface = Surface(surfaceTexture)
-        val recordSurface = mediaRecorder.surface
-
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-        captureRequestBuilder.addTarget(textureSurface)
-        captureRequestBuilder.addTarget(recordSurface)
-        val surfaces = arrayListOf<Surface>().apply {
-            add(textureSurface)
-            add(recordSurface)
-        }
-
-        cameraDevice.createCaptureSession(surfaces,
-                object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigureFailed(session: CameraCaptureSession) {
-                        Log.e(TAG, "creating record session failed!")
-                    }
-
-                    override fun onConfigured(session: CameraCaptureSession) {
-                        captureSession = session
-                        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
-
-                        mediaRecorder.start()
-                    }
-
-                }, backgroundHandler)
-    }
-
-    //Method to preview the camera output on the "Box" designated for it
-    private fun previewSession() {
-        try {
-
-            val surfaceTexture = videoPreview.surfaceTexture
-            val surface = Surface(surfaceTexture)
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-            captureRequestBuilder.addTarget(surface)
-            cameraDevice.createCaptureSession(mutableListOf(surface),
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            Log.e(TAG, "Failed to create capture session")
-                        }
-
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            captureSession = session
-                            try {
-                                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                                captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
-                            } catch (e: CameraAccessException) {
-                                Log.e(TAG, e.toString())
-                            }
-                        }
-                    }, null)
-
-        } catch (e: CameraAccessException) {
-            Log.e(TAG, e.toString())
-        }
-    }
-
-    private fun closeCamera() {
-        videoPreview.isVisible = false
-        if (this::captureSession.isInitialized)
-            captureSession.close()
-        if (this::cameraDevice.isInitialized)
-            cameraDevice.close()
-    }
-
-    private fun startBackgroundThread() {
-        backgroundThread = HandlerThread("Camara2 Kotlin").also { it.start() }
-        backgroundHandler = Handler(backgroundThread.looper)
-    }
-
-    private fun stopBackgroundThread() {
-        backgroundThread.quitSafely()
-
-        try {
-            backgroundThread.join()
-        } catch (e: InterruptedException) {
-            Log.e(TAG, e.toString())
-        }
-    }
-
-    companion object {
-        private val TAG = SamplingActivity::class.qualifiedName
-    }
-
-    private fun <T> cameraCharacteristics(cameraId: String, key: CameraCharacteristics.Key<T>): T {
-        val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-        return when (key) {
-            CameraCharacteristics.LENS_FACING -> characteristics.get(key)!!
-            else -> throw  IllegalArgumentException("Key not recognized")
-        }
-    }
-
-    private val surfaceListener = object : TextureView.SurfaceTextureListener {
-        override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-
-        }
-
-        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
-        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture) = true
-
-        override fun onSurfaceTextureUpdated(p0: SurfaceTexture) = Unit
-
-    }
-
-    private fun cameraId(lens: Int): String {
-        var deviceId = listOf<String>()
-        try {
-            val cameraIdList = cameraManager.cameraIdList
-            deviceId = cameraIdList.filter { lens == cameraCharacteristics(it, CameraCharacteristics.LENS_FACING) }
-        } catch (e: CameraAccessException) {
-            Log.e(TAG, e.toString())
-        }
-        return deviceId[0]
-    }
-
-    @SuppressLint("MissingPermission")
-    private fun connectCamera() {
-        val deviceId = cameraId(CameraCharacteristics.LENS_FACING_BACK)
-        Log.e(TAG, "deviceId: $deviceId")
-        try {
-            cameraManager.openCamera(deviceId, deviceStateCallback, backgroundHandler)
-        } catch (e: CameraAccessException) {
-            Log.e(TAG, e.toString())
-        } catch (e: InterruptedException) {
-            Log.e(TAG, "Open camera device interrupted while opened")
-        }
-    }
 
     private fun createFolders() {
         appFolderPath = this.getExternalFilesDir(null)?.absolutePath
@@ -457,28 +288,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             filesFolder!!.mkdir()
         }
 
-    }
-
-    @Throws(IOException::class)
-    protected fun setupMediaRecorder() {
-        mediaRecorder.apply {
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(filesFolder!!.absolutePath + "/Recording$recordNumber.mp4")
-            setVideoEncodingBitRate(1000000)
-            setVideoFrameRate(30)
-            setVideoSize(1280, 720)
-            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-            prepare()
-            recordNumber++
-        }
-    }
-
-    private fun stopRecording() {
-        mediaRecorder.apply {
-            stop()
-            reset()
-        }
     }
 
 
@@ -522,24 +331,21 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
         sensorManager!!.registerListener(accManager, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
         sensorManager!!.registerListener(gManager, gyro, SensorManager.SENSOR_DELAY_NORMAL)
-        startBackgroundThread()
+        deviceCameraManager!!.startBackgroundThread()
         if (videoPreview.isAvailable)
         else
-            videoPreview.surfaceTextureListener = surfaceListener
+            videoPreview.surfaceTextureListener = deviceCameraManager!!.surfaceListener
         startLocationUpdates()
     }
 
     override fun onPause() {
 
         super.onPause()
-        closeCamera()
-        stopBackgroundThread()
+        deviceCameraManager!!.closeCamera()
+        deviceCameraManager!!.stopBackgroundThread()
         mapView.onPause()
-
         sensorManager!!.unregisterListener(accManager)
         sensorManager!!.unregisterListener(gManager)
-
-
     }
 
     override fun onStop() {
@@ -558,15 +364,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         mapView?.onSaveInstanceState(outState)
     }
 
-
     @SuppressLint("MissingPermission")
-
-    lateinit var gyroData: Array<Double>
-    lateinit var accData: Array<Double>
     private suspend fun scanning() {
-
         while (stillScanning) {
-
             timer = System.currentTimeMillis() - timerStarted!!
             gyroData = gManager.getData()
             accData = accManager.getData()
@@ -576,8 +376,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
     private fun saveToDatabase(fname: String) {
-
-
         gmap?.snapshot {
             dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, timer, 69f, fname), this)
 
@@ -593,7 +391,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
     }
 
-   private suspend fun checkSpeed() {
+    private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
             if (loc?.hasSpeed() == true) {
                 speed = loc?.speed!!
@@ -619,7 +417,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     }
 
 
-    private fun setCurrentPositionMarker(){
+    private fun setCurrentPositionMarker() {
         cp?.remove()
         cp = gmap?.addMarker(
                 MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
@@ -638,8 +436,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         gmap?.addPolyline(polyline)
     }
 
-    var trajectoryPolyLine:Polyline?=null
-    private fun setPolyLineOnMap(){
+
+    private fun setPolyLineOnMap() {
         trajectoryPolyLine?.remove()
         trajectoryPolyLine = gmap?.addPolyline(polyline)
 
@@ -655,6 +453,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         val locationResult = fusedLocationProviderClient?.lastLocation
         locationResult?.addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
+
                 // Set the map's camera position to the current location of the device.
                 lastKnownLocation = task.result
                 if (lastKnownLocation != null) {
@@ -686,7 +485,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
         // var response = URL(url).readText()
-
 
 
         request(url!!)
