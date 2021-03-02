@@ -298,7 +298,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     endFile += gson.toJson(map)
                     val fw = FileWriter(file.absoluteFile)
                     val bw = BufferedWriter(fw)
-                    bw.write(endFile.toString())
+                    bw.write(endFile)
                     bw.flush()
                     bw.close()
                 } catch (e: IOException) {
@@ -372,12 +372,16 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
     }
 
-    private fun saveToDatabase(fname: String) {
+    private fun saveToDatabase(fName: String) {
         gmap?.snapshot {
-            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, timer, 69f, fname), this)
+            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, timer, getTravelDistance(), fName), this)
 
         }
 
+    }
+    private fun getTravelDistance():Float
+    {
+        return 69f;
     }
 
     private fun gotData() {
