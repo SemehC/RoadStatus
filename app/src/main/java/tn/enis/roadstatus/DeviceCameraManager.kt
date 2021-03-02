@@ -10,18 +10,15 @@ import android.hardware.camera2.CaptureRequest
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
-
 import android.hardware.camera2.*
 import android.util.Log
 import android.view.Surface
 import android.view.TextureView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
-import kotlinx.android.synthetic.main.activity_scanning.*
 import java.io.File
 import java.io.IOException
 
-
+@Suppress("DEPRECATION")
 class DeviceCameraManager(private val filesFolder: File,private val context: Context,private val videoPreview:TextureView) {
 
     private lateinit var backgroundThread: HandlerThread

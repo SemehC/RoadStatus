@@ -64,7 +64,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         var long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
         var lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
         lowSpeedPolyPath.add(LatLng(lat,long))
-        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting Location"))
+        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting Location"))?.tag="starting location"
         gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat!!, long!!), 20.0f))
 
         for (i in 1 until roadStatusData!!.length()){
@@ -111,7 +111,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
 
         // Display a negative button on alert dialog
-        builder.setNegativeButton("Hide"){dialog,which ->
+        builder.setNegativeButton("Hide"){ _, _ ->
 
         }
 
@@ -168,26 +168,26 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     }
 
     override fun onMarkerClick(p0: Marker?): Boolean {
+
         println("Marker tag:"+p0?.tag)
-        val speed = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("speed") as Double
-        val gyroX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-x") as Double
-        val gyroY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-y") as Double
-        val gyroZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-z") as Double
-        val accX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-x") as Double
-        val accY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-y") as Double
-        val accZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-z") as Double
-        val lat = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Latitude") as Double
-        val long = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Longitude") as Double
+        if(!p0?.tag?.equals("starting location")!!)
+        {
+            val speed = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("speed") as Double
+            val gyroX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-x") as Double
+            val gyroY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-y") as Double
+            val gyroZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-z") as Double
+            val accX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-x") as Double
+            val accY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-y") as Double
+            val accZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-z") as Double
+            val lat = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Latitude") as Double
+            val long = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Longitude") as Double
+            val data = mapOf("speed" to "$speed KM/H",
+                    "Gyroscope X" to gyroX.toString(),"Gyroscope Y" to gyroY.toString(),"Gyroscope Z" to gyroZ.toString(),
+                    "Accelerometer X" to accX.toString(),"Accelerometer Y" to accY.toString(),"Accelerometer Z" to accZ.toString(),
+                    "Latitude" to lat.toString(),"Longitude" to long.toString())
 
-
-        val data = mapOf("speed" to speed.toString(),
-                "Gyroscope X" to gyroX.toString(),"Gyroscope Y" to gyroY.toString(),"Gyroscope Z" to gyroZ.toString(),
-                "Accelerometer X" to accX.toString(),"Accelerometer Y" to accY.toString(),"Accelerometer Z" to accZ.toString(),
-                "Latitude" to lat.toString(),"Longitude" to long.toString())
-
-        showAllInfo(data)
-
-
+            showAllInfo(data)
+        }
         return true
     }
 

@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
 
-@Suppress("DEPRECATION")
+
 class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback {
 
     private var locationRequest: LocationRequest? = null
@@ -276,9 +276,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         appFolderPath = this.getExternalFilesDir(null)?.absolutePath
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
         folderName = simpleDateFormat.format(Date())
-
-
-
         appFolder = File(appFolderPath, "PFA")
         filesFolder = File(appFolder!!.absolutePath, folderName)
         if (!appFolder?.exists()!!) {
