@@ -32,14 +32,17 @@ import java.io.File
 class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
 
     var id:Int?=-1
-    var roadStatusItemMapFragment = RoadStatusItemMapFragment()
-    var roadStatusItemInfoFragment=RoadStatusItemInfoFragment()
+    private var roadStatusItemMapFragment = RoadStatusItemMapFragment()
+    private var roadStatusItemInfoFragment=RoadStatusItemInfoFragment()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val road=DatabaseHandler().getItemById(view?.context,id!!)
+
         roadStatusItemMapFragment.id=id
         roadStatusItemInfoFragment.id=id
+        roadStatusItemInfoFragment.road=road
 
         childFragmentManager.beginTransaction()?.apply {
             replace(R.id.road_status_item_fragment_container,roadStatusItemInfoFragment).commit()
@@ -74,11 +77,6 @@ class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
 
 
     }
-
-
-
-
-
 
 
 }

@@ -7,6 +7,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import pub.devrel.easypermissions.AppSettingsDialog
 import pub.devrel.easypermissions.EasyPermissions
 import tn.enis.roadstatus.fragments.HomeFragment
@@ -14,6 +18,7 @@ import tn.enis.roadstatus.fragments.ProfileFragment
 import tn.enis.roadstatus.fragments.RoadStatusItemFragment
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Utilities
+import java.util.*
 
 
 class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
@@ -21,12 +26,16 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
 
 
 
-    val itemFragment = RoadStatusItemFragment()
+    private val itemFragment = RoadStatusItemFragment()
+    private val homeFragment = HomeFragment()
+
+    private var enteredFragment=false
+    private var sureToClose=false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val homeFragment = HomeFragment()
+
         val profileFragment = ProfileFragment()
 
         homeFragment.mainActivity=this
@@ -69,12 +78,39 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
 
 
     fun openRoadStatusItem(id:Int){
+        enteredFragment=true
         itemFragment.id=id
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragmentContainer,itemFragment).commit()
         }
     }
 
+
+
+
+    fun returnHome(){
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.fragmentContainer,homeFragment).commit()
+        }
+    }
+
+    override fun onBackPressed() {
+
+        if(enteredFragment){
+            returnHome()
+            enteredFragment=false
+        }else{
+            if(sureToClose){
+                super.onBackPressed()
+            }else{
+                Toast.makeText(this,"Press again to close",Toast.LENGTH_SHORT).show()
+                GlobalScope.launch(Dispatchers.Default) {
+                    delay(2000)
+                    sureToClose=true
+                }
+            }
+        }
+    }
 
 
     private fun requestPermissions()

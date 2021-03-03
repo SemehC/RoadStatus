@@ -12,8 +12,9 @@ import kotlinx.android.synthetic.main.road_status_item.view.*
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.other.RoadStatusItem
+import java.io.File
 
-class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity,val homeFragment: HomeFragment):
+class RoadStatusItemAdapter(val arrayList: ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity, val homeFragment: HomeFragment):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View):RecyclerView.ViewHolder(itemView){
@@ -27,27 +28,27 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.road_status_item,parent,false)
+        val v = LayoutInflater.from(parent.context).inflate(R.layout.road_status_item, parent, false)
         return ViewHolder(v)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
-        holder.itemView.road_status_item_image.animation = AnimationUtils.loadAnimation(context,R.anim.fade_transition_animation)
-        holder.itemView.road_status_item.animation = AnimationUtils.loadAnimation(context,R.anim.fade_scale_animation)
+        holder.itemView.road_status_item_image.animation = AnimationUtils.loadAnimation(context, R.anim.fade_transition_animation)
+        holder.itemView.road_status_item.animation = AnimationUtils.loadAnimation(context, R.anim.fade_scale_animation)
         holder.bindItems(arrayList[position])
         holder.itemView.setOnClickListener {
             itemClicked(arrayList[position].id)
         }
 
         holder.itemView.setOnLongClickListener {
-            deleteItem(arrayList[position].id,arrayList[position].folder)
+            deleteItem(arrayList[position].id, arrayList[position].folder)
             true
         }
 
     }
 
-    fun deleteItem(id:Int,folder:String){
+    fun deleteItem(id: Int, folder: String){
 
 
         val builder = AlertDialog.Builder(context)
@@ -59,16 +60,21 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         builder.setMessage("Are you sure you want to delete this ?")
 
         // Set a positive button and its click listener on alert dialog
-        builder.setPositiveButton("YES"){dialog, which ->
-            DatabaseHandler().removeItemById(context,id)
+        builder.setPositiveButton("YES"){ dialog, which ->
+            DatabaseHandler().removeItemById(context, id)
             homeFragment.refresh()
-            //to fix , [REMOVE ACTUAL FOLDER AND FILES ]
+            val dir =  context.getExternalFilesDir(null)?.absolutePath
+            val folderName = folder
+            val appFolder = File(dir, "PFA")
+            val filesFolder = File(appFolder!!.absolutePath, folderName)
+            filesFolder.deleteRecursively()
+            filesFolder.delete()
         }
 
 
         // Display a negative button on alert dialog
-        builder.setNegativeButton("No"){dialog,which ->
-            Toast.makeText(context,"Canceled.",Toast.LENGTH_SHORT).show()
+        builder.setNegativeButton("No"){ dialog, which ->
+            Toast.makeText(context, "Canceled.", Toast.LENGTH_SHORT).show()
         }
 
 
@@ -84,7 +90,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
 
-    fun itemClicked(id:Int){
+    fun itemClicked(id: Int){
         mainActivity.openRoadStatusItem(id)
     }
 
