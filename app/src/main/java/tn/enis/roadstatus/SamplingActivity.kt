@@ -35,6 +35,7 @@ import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import tn.enis.roadstatus.listeners.AccelerometerListener
 import tn.enis.roadstatus.listeners.GyroscopeListener
+import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -221,7 +222,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
     private fun updateLocation() {
-        val distanceBetweenPositions: FloatArray? = null
+        var distanceBetweenPositions:Float=0f
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest?.interval = 50
@@ -230,7 +231,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.locations.last()
-                if (prevLocation == null) {
+               if (prevLocation == null) {
                     prevLocation = loc
                     longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                     altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
@@ -239,23 +240,21 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     polyline?.add(LatLng(latitude!!, longitude!!))
                 } else {
                     try {
-                        Location.distanceBetween(prevLocation!!.latitude, prevLocation!!.longitude, loc!!.latitude, loc!!.longitude, distanceBetweenPositions)
+                        distanceBetweenPositions = prevLocation!!.distanceTo(loc)
                     } catch (e: Exception) {
-                        distanceBetweenPositions?.set(0, 0f)
+                        distanceBetweenPositions = 0f
                     }
-                    if (distanceBetweenPositions != null) {
-                        println("Distance between positions : " + distanceBetweenPositions.get(0))
-                        if (distanceBetweenPositions.get(0) > 20f) {
-                            setCurrentPositionMarker()
-                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                            polyline?.add(LatLng(latitude!!, longitude!!))
-                            prevLocation = loc
-                        }
-                    }
-                }
+                   println("Distance between positions : " + distanceBetweenPositions)
+                   if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
+                       setCurrentPositionMarker()
+                       longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                       altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                       latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                       speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                       polyline?.add(LatLng(latitude!!, longitude!!))
+                       prevLocation = loc
+                   }
+               }
                 setCurrentPositionMarker()
                 setPolyLineOnMap()
 
@@ -545,6 +544,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     override fun onMapLoaded() {
         getDeviceLocation()
+        startLocationUpdates()
     }
 
     override fun onDestroy() {

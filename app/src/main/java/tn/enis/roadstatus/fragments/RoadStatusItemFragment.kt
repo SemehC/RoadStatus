@@ -38,7 +38,7 @@ class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        roadStatusItemMapFragment.id=id
+        roadStatusItemMapFragment.id= id!!
         roadStatusItemInfoFragment.id=id
 
         childFragmentManager.beginTransaction()?.apply {
