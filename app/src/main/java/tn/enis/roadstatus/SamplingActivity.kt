@@ -25,6 +25,7 @@ import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
@@ -122,6 +123,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var prevLocation: Location? = null
     private var deviceCameraManager: DeviceCameraManager? = null
 
+
+    private var calibrated=false
+
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -148,6 +152,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnMapLoadedCallback(this)
 
+
         }
 
         // Construct a FusedLocationProviderClient.
@@ -173,6 +178,18 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             stillScanning = false
             startActivity(Intent(this, MainActivity::class.java))
             finish()
+        }
+
+
+        GlobalScope.launch {
+            val job = GlobalScope.launch {
+                delay(10000)
+            }
+            runBlocking {
+                job.join()
+                calibrated=true
+                startTimer()
+            }
         }
 
         //Record or stop the recording
@@ -231,38 +248,40 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
-
-                loc = locationResult.lastLocation
-                if (prevLocation == null) {
-                    prevLocation = loc
-                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                    speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                    polyline?.add(LatLng(latitude!!, longitude!!))
-                } else {
-                    try {
-                        distanceBetweenPositions = prevLocation!!.distanceTo(loc)
-                    }
-                    catch (e: Exception) {
-                        distanceBetweenPositions = 0f
-                    }
-
-                    println("Distance between positions : " + distanceBetweenPositions)
-                    if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
-                        setCurrentPositionMarker()
+                if(calibrated){
+                    loc = locationResult.lastLocation
+                    if (prevLocation == null) {
+                        prevLocation = loc
                         longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                         altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                         latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                         speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                         polyline?.add(LatLng(latitude!!, longitude!!))
-                        prevLocation = loc
+                    } else {
+                        try {
+                            distanceBetweenPositions = prevLocation!!.distanceTo(loc)
+                        }
+                        catch (e: Exception) {
+                            distanceBetweenPositions = 0f
+                        }
+
+                        println("Distance between positions : " + distanceBetweenPositions)
+                        if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
+                            setCurrentPositionMarker()
+                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                            polyline?.add(LatLng(latitude!!, longitude!!))
+                            prevLocation = loc
+                        }
+
+                        setCurrentPositionMarker()
+                        setPolyLineOnMap()
+
                     }
-
-                    setCurrentPositionMarker()
-                    setPolyLineOnMap()
-
                 }
+
             }
         }
     }
@@ -367,7 +386,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     @SuppressLint("MissingPermission")
     private suspend fun scanning() {
-        while (stillScanning) {
+        while (stillScanning && calibrated) {
             timer = System.currentTimeMillis() - timerStarted!!
             gyroData = gManager.getData()
             accData = accManager.getData()
@@ -471,7 +490,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     startingPosition = LatLng(latitude!!, longitude!!)
                     startScanning()
                     updateMapUI()
-                    startTimer()
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
                         LatLng(loc!!.latitude,
                             loc!!.longitude), 20f))
@@ -500,6 +518,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
+
 
         fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
             locationCallback,
@@ -551,6 +570,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     override fun onMapLoaded() {
         getDeviceLocation()
         startLocationUpdates()
+        gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
     }
 
     override fun onDestroy() {
