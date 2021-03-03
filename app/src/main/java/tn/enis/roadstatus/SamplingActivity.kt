@@ -37,7 +37,6 @@ import tn.enis.roadstatus.listeners.AccelerometerListener
 import tn.enis.roadstatus.listeners.GyroscopeListener
 import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
 import tn.enis.roadstatus.other.Utilities
-
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -233,7 +232,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.locations.last()
-               if (prevLocation == null) {
+                if (prevLocation == null) {
                     prevLocation = loc
                     longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                     altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
@@ -246,7 +245,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     } catch (e: Exception) {
                         distanceBetweenPositions = 0f
                     }
-
                     println("Distance between positions : " + distanceBetweenPositions)
                     if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
                         setCurrentPositionMarker()
@@ -258,17 +256,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                         prevLocation = loc
                     }
                 }
-                   println("Distance between positions : " + distanceBetweenPositions)
-                   if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
-                       setCurrentPositionMarker()
-                       longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                       altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                       latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                       speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                       polyline?.add(LatLng(latitude!!, longitude!!))
-                       prevLocation = loc
-                   }
-               }
                 setCurrentPositionMarker()
                 setPolyLineOnMap()
 
@@ -558,7 +545,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     override fun onMapLoaded() {
         getDeviceLocation()
-        startLocationUpdates()
     }
 
     override fun onDestroy() {

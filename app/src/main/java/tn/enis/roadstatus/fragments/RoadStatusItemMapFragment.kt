@@ -8,12 +8,8 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 
 import android.view.View
-import android.widget.Button
-import android.widget.Toast.*
-import androidx.annotation.MenuRes
 
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -27,18 +23,15 @@ import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import java.io.File
 
-class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_map),GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener,GoogleMap.OnMapLoadedCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnPolylineClickListener {
+class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_map),GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener,GoogleMap.OnMapLoadedCallback, GoogleMap.OnMarkerClickListener {
     var id:Int?=-1
     var gmap: GoogleMap? = null
     var currentRoadStatus: RoadStatus?=null
     var roadStatusData: JSONObject?=null
     var mapView:MapView?=null
-    var lastMarker:Marker?=null
-    private var mapTouchPosition:LatLng?=null
-    private var marker : Marker?=null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mapView = view.findViewById(R.id.road_status_item_mapView)
+        mapView = view?.findViewById(R.id.road_status_item_mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.isClickable = true
         mapView?.getMapAsync {
@@ -47,18 +40,13 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             gmap?.setOnMapClickListener(this)
             gmap?.setOnMapLongClickListener(this)
             gmap?.setOnCameraIdleListener(this)
-            gmap?.setOnPolylineClickListener (this)
         }
-        currentRoadStatus = DatabaseHandler().getItemById(view.context,id!!)
-        val appFolderPath = view.context.getExternalFilesDir(null)?.absolutePath
+        currentRoadStatus = DatabaseHandler().getItemById(view?.context,id!!)
+        val appFolderPath = view?.context.getExternalFilesDir(null)?.absolutePath
         val folderName=currentRoadStatus!!.file_name
 
         val appFolder = File(appFolderPath, "PFA")
         val data = File(appFolder.absolutePath+"/"+folderName+"/data.json")
-        val button = view.findViewById<Button>(R.id.menu_button)
-        button.setOnClickListener { v: View ->
-            showMenu(v, R.menu.popup_menu)
-        }
 
 
 
@@ -66,51 +54,46 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
     }
 
-    private fun showMenu(v: View, @MenuRes menuRes: Int) {
-        val popup = PopupMenu(requireContext(), v)
-        popup.menuInflater.inflate(menuRes, popup.menu)
-        for (i in 1 until roadStatusData!!.length()){
-            popup.menu.add("$i").setOnMenuItemClickListener {
-                val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
-                val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
-                val info="Latitude: $lat, Longitute: $long"
-                lastMarker?.remove()
-                lastMarker = gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Position").snippet(info)
-                        .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.RED)).visible(true))
-                lastMarker!!.tag=i
-                gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 20.0f))
-                return@setOnMenuItemClickListener true
 
-            }
-        }
-
-
-        popup.setOnDismissListener {
-            // Respond to popup being dismissed.
-        }
-        // Show the popup menu.
-        popup.show()
-    }
     fun setDataToMap(){
-        val pathPolyline = PolylineOptions().color(Color.BLUE)
-        pathPolyline.startCap(RoundCap())
-        pathPolyline.endCap(RoundCap())
-        val long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
-        val lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
-        pathPolyline.add(LatLng(lat,long))
-        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting location"))?.tag="starting location"
-        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 20.0f))
+        var lowSpeedPolyPath = PolylineOptions().color(Color.BLUE)
+        lowSpeedPolyPath.startCap(RoundCap())
+        lowSpeedPolyPath.endCap(RoundCap())
+
+
+
+        var long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
+        var lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
+        lowSpeedPolyPath.add(LatLng(lat,long))
+        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting Location"))?.tag="starting location"
+        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat!!, long!!), 20.0f))
+
         for (i in 1 until roadStatusData!!.length()){
-            val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
-            val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
-            pathPolyline.add(LatLng(lat,long))
-            if(i==roadStatusData!!.length()-1)
-            {
-                gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Ending location"))?.tag="ending location"
+            val speed = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
+            val gyroX = roadStatusData?.getJSONObject(i.toString())?.get("Gyro-x")
+            val info="Latitude: $lat, Longitute: $long"
+
+
+            long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
+            lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
+
+            lowSpeedPolyPath.add(LatLng(lat,long)).color(Color.BLUE)
+
+            if(speed>5){
+                gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Position").snippet(info)
+                        .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.RED)))?.tag=i
+            }else{
+                gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Position").snippet(info)
+                        .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.BLUE)))?.tag=i
             }
+
+
+
         }
-        pathPolyline.width(10f)
-        gmap?.addPolyline(pathPolyline)
+
+
+        gmap?.addPolyline(lowSpeedPolyPath)
+
     }
 
 
@@ -170,8 +153,8 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
 
 
-    override fun onMapClick(position: LatLng?) {
-        mapTouchPosition = position
+    override fun onMapClick(p0: LatLng?) {
+
     }
 
     override fun onMapLongClick(p0: LatLng?) {
@@ -182,37 +165,29 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
     override fun onMapLoaded() {
         gmap?.setOnMarkerClickListener(this)
-        setDataToMap()
+        //setDataToMap()
     }
 
-    override fun onMarkerClick(marker: Marker?): Boolean {
+    override fun onMarkerClick(p0: Marker?): Boolean {
 
-        println("Marker tag:"+marker?.tag)
-        if(!marker?.tag?.equals("starting location")!! && !marker?.tag?.equals("ending location")!!)
+        println("Marker tag:"+p0?.tag)
+        if(!p0?.tag?.equals("starting location")!!)
         {
-            if(lastMarker!=null)
-                lastMarker!!.isVisible = false
-            lastMarker = marker
-            marker.isVisible=true
-            val speed = roadStatusData?.getJSONObject(marker.tag.toString())?.get("speed") as Double
-            val gyroX = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Gyro-x") as Double
-            val gyroY = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Gyro-y") as Double
-            val gyroZ = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Gyro-z") as Double
-            val accX = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Acc-x") as Double
-            val accY = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Acc-y") as Double
-            val accZ = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Acc-z") as Double
-            val lat = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Latitude") as Double
-            val long = roadStatusData?.getJSONObject(marker.tag.toString())?.get("Longitude") as Double
+            val speed = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("speed") as Double
+            val gyroX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-x") as Double
+            val gyroY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-y") as Double
+            val gyroZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Gyro-z") as Double
+            val accX = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-x") as Double
+            val accY = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-y") as Double
+            val accZ = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Acc-z") as Double
+            val lat = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Latitude") as Double
+            val long = roadStatusData?.getJSONObject(p0?.tag.toString())?.get("Longitude") as Double
             val data = mapOf("speed" to "$speed KM/H",
                     "Gyroscope X" to gyroX.toString(),"Gyroscope Y" to gyroY.toString(),"Gyroscope Z" to gyroZ.toString(),
                     "Accelerometer X" to accX.toString(),"Accelerometer Y" to accY.toString(),"Accelerometer Z" to accZ.toString(),
                     "Latitude" to lat.toString(),"Longitude" to long.toString())
 
             showAllInfo(data)
-        }
-        else
-        {
-            marker.showInfoWindow()
         }
         return true
     }
@@ -223,10 +198,5 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         mapView?.removeAllViews()
         super.onDestroyView()
     }
-
-    override fun onPolylineClick(polyline: Polyline?) {
-
-    }
-
 
 }
