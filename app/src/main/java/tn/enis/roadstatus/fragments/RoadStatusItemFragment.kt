@@ -40,7 +40,9 @@ class RoadStatusItemFragment : Fragment(R.layout.fragment_road_status_item){
 
         val road=DatabaseHandler().getItemById(view?.context,id!!)
 
-        roadStatusItemMapFragment.id=id
+
+        roadStatusItemMapFragment.id= id!!
+
         roadStatusItemInfoFragment.id=id
         roadStatusItemInfoFragment.road=road
 
