@@ -98,12 +98,16 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         val long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
         val lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
         pathPolyline.add(LatLng(lat,long))
-        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting Location").title("Starting location"))?.tag="starting location"
+        gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting location"))?.tag="starting location"
         gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 20.0f))
         for (i in 1 until roadStatusData!!.length()){
             val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
             val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
             pathPolyline.add(LatLng(lat,long))
+            if(i==roadStatusData!!.length()-1)
+            {
+                gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Ending location"))?.tag="ending location"
+            }
         }
         pathPolyline.width(10f)
         gmap?.addPolyline(pathPolyline)
@@ -184,7 +188,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     override fun onMarkerClick(marker: Marker?): Boolean {
 
         println("Marker tag:"+marker?.tag)
-        if(!marker?.tag?.equals("starting location")!!)
+        if(!marker?.tag?.equals("starting location")!! && !marker?.tag?.equals("ending location")!!)
         {
             if(lastMarker!=null)
                 lastMarker!!.isVisible = false
@@ -206,6 +210,10 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
             showAllInfo(data)
         }
+        else
+        {
+            marker.showInfoWindow()
+        }
         return true
     }
 
@@ -217,19 +225,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     }
 
     override fun onPolylineClick(polyline: Polyline?) {
-        /*var distance:FloatArray ?= null
-        var distances=mutableMapOf<LatLng,Float>()
-        println("Touched map at $mapTouchPosition")
-        if(mapTouchPosition!=null)
-        {
-            polyline?.points!!.forEach {
-                Location.distanceBetween(mapTouchPosition!!.latitude,mapTouchPosition!!.longitude,it.latitude,it.longitude,distance)
-                distances[it] = distance?.get(0)!!
-            }
-            marker?.remove()
-            marker = gmap?.addMarker(MarkerOptions().position(distances.minByOrNull { it.value }!!.key).title("Position")
-                    .icon(bitmapDescriptorFromVector(view?.context!!,R.drawable.marker_dot_icon, Color.RED)))
-        }*/
+
     }
 
 
