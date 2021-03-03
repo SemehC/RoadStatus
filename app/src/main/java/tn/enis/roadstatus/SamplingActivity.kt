@@ -106,6 +106,12 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
     }
+    private val satelliteStyleButton: Button by lazy {
+        findViewById(R.id.satelliteStyle)
+    }
+    private val mapStyleButton: Button by lazy {
+        findViewById(R.id.mapStyle)
+    }
     private val startStopRecording: ImageButton by lazy {
         findViewById(R.id.recordVideoButton)
     }
@@ -123,8 +129,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var prevLocation: Location? = null
     private var deviceCameraManager: DeviceCameraManager? = null
 
-
-    private var calibrated=false
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -151,8 +155,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             gmap?.setOnMapLongClickListener(this)
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnMapLoadedCallback(this)
-
-
+            gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
+        }
+        satelliteStyleButton.setOnClickListener {
+            gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
+        }
+        mapStyleButton.setOnClickListener {
+            gmap?.mapType = GoogleMap.MAP_TYPE_NORMAL
         }
 
         // Construct a FusedLocationProviderClient.
@@ -178,18 +187,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
             stillScanning = false
             startActivity(Intent(this, MainActivity::class.java))
             finish()
-        }
-
-
-        GlobalScope.launch {
-            val job = GlobalScope.launch {
-                delay(10000)
-            }
-            runBlocking {
-                job.join()
-                calibrated=true
-                startTimer()
-            }
         }
 
         //Record or stop the recording
@@ -248,39 +245,37 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
-                if(calibrated){
-                    loc = locationResult.lastLocation
-                    if (prevLocation == null) {
-                        prevLocation = loc
+                loc = locationResult.lastLocation
+                if (prevLocation == null) {
+                    prevLocation = loc
+                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                    speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                    polyline?.add(LatLng(latitude!!, longitude!!))
+                } else {
+                    try {
+                        distanceBetweenPositions = prevLocation!!.distanceTo(loc)
+                    } catch (e: Exception) {
+                        distanceBetweenPositions = 0f
+                    }
+
+                    println("Distance between positions : " + distanceBetweenPositions)
+                    if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
+                        setCurrentPositionMarker()
                         longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                         altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                         latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                         speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                         polyline?.add(LatLng(latitude!!, longitude!!))
-                    } else {
-                        try {
-                            distanceBetweenPositions = prevLocation!!.distanceTo(loc)
-                        }
-                        catch (e: Exception) {
-                            distanceBetweenPositions = 0f
-                        }
-
-                        println("Distance between positions : " + distanceBetweenPositions)
-                        if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
-                            setCurrentPositionMarker()
-                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                            polyline?.add(LatLng(latitude!!, longitude!!))
-                            prevLocation = loc
-                        }
-
-                        setCurrentPositionMarker()
-                        setPolyLineOnMap()
-
+                        prevLocation = loc
                     }
+
+                    setCurrentPositionMarker()
+                    setPolyLineOnMap()
+
                 }
+
 
             }
         }
@@ -386,7 +381,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     @SuppressLint("MissingPermission")
     private suspend fun scanning() {
-        while (stillScanning && calibrated) {
+        while (stillScanning) {
             timer = System.currentTimeMillis() - timerStarted!!
             gyroData = gManager.getData()
             accData = accManager.getData()
@@ -444,17 +439,17 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private fun setCurrentPositionMarker() {
         cp?.remove()
         cp = gmap?.addMarker(
-            MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
         )
     }
 
     private fun updateMapUI() {
         if (im == null) {
             im = gmap?.addMarker(
-                startingPosition?.let {
-                    MarkerOptions().position(it)
-                        .title("Initial Position")
-                }
+                    startingPosition?.let {
+                        MarkerOptions().position(it)
+                                .title("Initial Position")
+                    }
             )
         }
         gmap?.addPolyline(polyline)
@@ -489,10 +484,12 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                     startingPosition = LatLng(latitude!!, longitude!!)
                     startScanning()
+                    startTimer()
                     updateMapUI()
+
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                        LatLng(loc!!.latitude,
-                            loc!!.longitude), 20f))
+                            LatLng(loc!!.latitude,
+                                    loc!!.longitude), 20f))
                 }
             }
         }
@@ -521,36 +518,36 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
         fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
-            locationCallback,
-            null)
+                locationCallback,
+                null)
     }
 
     fun request(url: String) {
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,
-            { response ->
-                var jsonObject = JSONObject(response)
-                val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
-                pathPolyLine = PolylineOptions().color(Color.BLUE)
-                pathPoints = jsonArray.getJSONObject(0)
-                    .getJSONArray("legs")
-                    .getJSONObject(0)
-                    .getJSONArray("points")
-                for (i in 0 until pathPoints.length()) {
-                    var lat = pathPoints.getJSONObject(i).get("latitude") as Double
-                    var lon = pathPoints.getJSONObject(i).get("longitude") as Double
+                { response ->
+                    var jsonObject = JSONObject(response)
+                    val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
+                    pathPolyLine = PolylineOptions().color(Color.BLUE)
+                    pathPoints = jsonArray.getJSONObject(0)
+                            .getJSONArray("legs")
+                            .getJSONObject(0)
+                            .getJSONArray("points")
+                    for (i in 0 until pathPoints.length()) {
+                        var lat = pathPoints.getJSONObject(i).get("latitude") as Double
+                        var lon = pathPoints.getJSONObject(i).get("longitude") as Double
 
-                    pathPolyLine?.add(LatLng(lat, lon))
-                }
-                p?.remove()
-                p = gmap?.addPolyline(pathPolyLine)
-                updateMapUI()
+                        pathPolyLine?.add(LatLng(lat, lon))
+                    }
+                    p?.remove()
+                    p = gmap?.addPolyline(pathPolyLine)
+                    updateMapUI()
 
-            },
-            {
+                },
+                {
 
-            })
+                })
 
         // Add the request to the RequestQueue.
 
@@ -570,7 +567,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     override fun onMapLoaded() {
         getDeviceLocation()
         startLocationUpdates()
-        gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
     }
 
     override fun onDestroy() {

@@ -95,4 +95,28 @@
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@android:drawable/presence_video_online" />
 
+    <Button
+        android:id="@+id/mapStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="75dp"
+        android:layout_marginBottom="7dp"
+        android:text="Map"
+        app:layout_constraintBottom_toTopOf="@+id/satelliteStyle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/satelliteStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="11dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginBottom="534dp"
+        android:text="Satellite"
+        app:layout_constraintBottom_toTopOf="@+id/speed_text_view"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/mapStyle" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
