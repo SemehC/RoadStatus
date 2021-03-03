@@ -5,5 +5,4 @@ object Constants {
     const val DATABASE_NAME="road_status_database"
     const val MAX_DISTANCE_BETWEEN_POINTS=3f
 
-    const val MAX_DISTANCE_BETWEEN_POINTS = 3f
 }
