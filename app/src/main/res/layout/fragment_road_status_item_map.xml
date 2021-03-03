@@ -1,39 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".fragments.RoadStatusItemMapFragment">
 
-    <Button
-        android:id="@+id/menu_button"
+    <com.google.android.gms.maps.MapView
+        android:id="@+id/road_status_item_mapView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="322dp"
-        android:layout_marginEnd="1dp"
-        android:text="Points"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
-    <FrameLayout
-        android:id="@+id/frameLayout3"
-        android:layout_width="419dp"
-        android:layout_height="688dp"
-        android:layout_marginTop="1dp"
-        android:layout_marginEnd="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/menu_button"
-        tools:context=".fragments.RoadStatusItemMapFragment">
-
-
-        <com.google.android.gms.maps.MapView
-            android:id="@+id/road_status_item_mapView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-
-            />
-
-    </FrameLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+        app:layout_constraintTop_toBottomOf="@+id/tabbed_road_status_menu" />
+</FrameLayout>
