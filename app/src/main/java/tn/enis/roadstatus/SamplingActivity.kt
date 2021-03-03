@@ -35,6 +35,9 @@ import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import tn.enis.roadstatus.listeners.AccelerometerListener
 import tn.enis.roadstatus.listeners.GyroscopeListener
+import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
+import tn.enis.roadstatus.other.Utilities
+
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileWriter
@@ -43,7 +46,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.round
-
 
 
 class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback {
@@ -221,7 +223,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
     private fun updateLocation() {
-        val distanceBetweenPositions: FloatArray? = null
+        var distanceBetweenPositions: Float = 0f
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest?.interval = 50
@@ -229,7 +231,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
-                loc = locationResult.locations.last()
+
+                loc = locationResult.lastLocation
                 if (prevLocation == null) {
                     prevLocation = loc
                     longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
@@ -239,26 +242,27 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     polyline?.add(LatLng(latitude!!, longitude!!))
                 } else {
                     try {
-                        Location.distanceBetween(prevLocation!!.latitude, prevLocation!!.longitude, loc!!.latitude, loc!!.longitude, distanceBetweenPositions)
-                    } catch (e: Exception) {
-                        distanceBetweenPositions?.set(0, 0f)
+                        distanceBetweenPositions = prevLocation!!.distanceTo(loc)
                     }
-                    if (distanceBetweenPositions != null) {
-                        println("Distance between positions : " + distanceBetweenPositions.get(0))
-                        if (distanceBetweenPositions.get(0) > 20f) {
-                            setCurrentPositionMarker()
-                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                            polyline?.add(LatLng(latitude!!, longitude!!))
-                            prevLocation = loc
-                        }
+                    catch (e: Exception) {
+                        distanceBetweenPositions = 0f
                     }
-                }
-                setCurrentPositionMarker()
-                setPolyLineOnMap()
 
+                    println("Distance between positions : " + distanceBetweenPositions)
+                    if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
+                        setCurrentPositionMarker()
+                        longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                        altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                        latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                        speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                        polyline?.add(LatLng(latitude!!, longitude!!))
+                        prevLocation = loc
+                    }
+
+                    setCurrentPositionMarker()
+                    setPolyLineOnMap()
+
+                }
             }
         }
     }
@@ -379,9 +383,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         }
 
     }
-    private fun getTravelDistance():Float
-    {
-        return 69f;
+
+    private fun getTravelDistance(): Float {
+        return Utilities.calculateTotalDistance(polyline!!)
     }
 
     private fun gotData() {
@@ -421,17 +425,17 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private fun setCurrentPositionMarker() {
         cp?.remove()
         cp = gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+            MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
         )
     }
 
     private fun updateMapUI() {
         if (im == null) {
             im = gmap?.addMarker(
-                    startingPosition?.let {
-                        MarkerOptions().position(it)
-                                .title("Initial Position")
-                    }
+                startingPosition?.let {
+                    MarkerOptions().position(it)
+                        .title("Initial Position")
+                }
             )
         }
         gmap?.addPolyline(polyline)
@@ -469,8 +473,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     updateMapUI()
                     startTimer()
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                            LatLng(loc!!.latitude,
-                                    loc!!.longitude), 20f))
+                        LatLng(loc!!.latitude,
+                            loc!!.longitude), 20f))
                 }
             }
         }
@@ -498,35 +502,36 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private fun startLocationUpdates() {
 
         fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
-                locationCallback,
-                null)
+            locationCallback,
+            null)
     }
+
     fun request(url: String) {
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,
-                { response ->
-                    var jsonObject = JSONObject(response)
-                    val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
-                    pathPolyLine = PolylineOptions().color(Color.BLUE)
-                    pathPoints = jsonArray.getJSONObject(0)
-                            .getJSONArray("legs")
-                            .getJSONObject(0)
-                            .getJSONArray("points")
-                    for (i in 0 until pathPoints.length()) {
-                        var lat = pathPoints.getJSONObject(i).get("latitude") as Double
-                        var lon = pathPoints.getJSONObject(i).get("longitude") as Double
+            { response ->
+                var jsonObject = JSONObject(response)
+                val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
+                pathPolyLine = PolylineOptions().color(Color.BLUE)
+                pathPoints = jsonArray.getJSONObject(0)
+                    .getJSONArray("legs")
+                    .getJSONObject(0)
+                    .getJSONArray("points")
+                for (i in 0 until pathPoints.length()) {
+                    var lat = pathPoints.getJSONObject(i).get("latitude") as Double
+                    var lon = pathPoints.getJSONObject(i).get("longitude") as Double
 
-                        pathPolyLine?.add(LatLng(lat, lon))
-                    }
-                    p?.remove()
-                    p = gmap?.addPolyline(pathPolyLine)
-                    updateMapUI()
+                    pathPolyLine?.add(LatLng(lat, lon))
+                }
+                p?.remove()
+                p = gmap?.addPolyline(pathPolyLine)
+                updateMapUI()
 
-                },
-                {
+            },
+            {
 
-                })
+            })
 
         // Add the request to the RequestQueue.
 
@@ -545,6 +550,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
     override fun onMapLoaded() {
         getDeviceLocation()
+        startLocationUpdates()
     }
 
     override fun onDestroy() {
@@ -552,6 +558,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         mapView.onDestroy()
         super.onDestroy()
     }
+
 }
 
 

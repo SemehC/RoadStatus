@@ -12,6 +12,7 @@ import kotlinx.android.synthetic.main.road_status_item.view.*
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.other.RoadStatusItem
+import java.io.File
 
 class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity,val homeFragment: HomeFragment):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {
@@ -62,7 +63,12 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         builder.setPositiveButton("YES"){dialog, which ->
             DatabaseHandler().removeItemById(context,id)
             homeFragment.refresh()
-            //to fix , [REMOVE ACTUAL FOLDER AND FILES ]
+            val dir =  context.getExternalFilesDir(null)?.absolutePath
+            val folderName = folder
+            val appFolder = File(dir, "PFA")
+            val filesFolder = File(appFolder!!.absolutePath, folderName)
+            filesFolder.deleteRecursively()
+            filesFolder.delete()
         }
 
 
