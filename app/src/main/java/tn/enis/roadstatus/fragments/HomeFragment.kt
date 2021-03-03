@@ -30,7 +30,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         swiperefresh.setOnRefreshListener {
             refresh()
-            swiperefresh.isRefreshing=false
         }
 
         refresh()
@@ -42,9 +41,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun prepareData():Boolean{
         var newRoads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
-
-        var test=true
-        if(test){
+        if(newRoads.size!=roads.size){
             arrayList.clear()
             roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
             roads!!.forEach {
@@ -54,15 +51,8 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
             return true
         }
-
+        swiperefresh.isRefreshing=false
         return false
-    }
-
-    private fun compareData(road1:RoadStatus, road2:RoadStatus):Boolean{
-
-        return (road1.date == road2.date && road1.file_name.equals(road2.file_name) && road1.id == road2.id && road1.label == road2.label)
-
-
     }
 
     fun refresh(){
@@ -76,7 +66,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             t=Toast.makeText(view?.context,"Up to date",Toast.LENGTH_SHORT)
             t?.show()
         }
+
     }
+
 
     override fun onResume() {
         super.onResume()
