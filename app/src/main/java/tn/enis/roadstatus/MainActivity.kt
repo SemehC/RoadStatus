@@ -16,6 +16,7 @@ import pub.devrel.easypermissions.EasyPermissions
 import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.fragments.ProfileFragment
 import tn.enis.roadstatus.fragments.RoadStatusItemFragment
+import tn.enis.roadstatus.fragments.SettingsFragment
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Utilities
 import java.util.*
@@ -37,6 +38,7 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
 
 
         val profileFragment = ProfileFragment()
+        val settingsFragment = SettingsFragment()
 
         homeFragment.mainActivity=this
 
@@ -64,6 +66,11 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
                     finish()
                 }
                 R.id.navigation_stats -> {
+                }
+                R.id.navigation_settings -> {
+                    supportFragmentManager.beginTransaction().apply {
+                        replace(R.id.fragmentContainer,settingsFragment).commit()
+                    }
                 }
             }
             true
