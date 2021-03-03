@@ -7,4 +7,5 @@ import tn.enis.roadstatus.R
 class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
 
+
 }
