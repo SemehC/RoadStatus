@@ -118,14 +118,20 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
             val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
 
-            val oldlong = roadStatusData?.getJSONObject((i-1).toString())?.get("Longitude") as Double
-            val oldlat = roadStatusData?.getJSONObject((i-1).toString())?.get("Latitude") as Double
+            var oldlat:Double?=null
+            var oldlong:Double?=null
+            if(i>0){
+                oldlong = roadStatusData?.getJSONObject((i-1).toString())?.get("Longitude") as Double
+                oldlat = roadStatusData?.getJSONObject((i-1).toString())?.get("Latitude") as Double
+            }
+
 
             val sp = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
 
             if(sp<4){
                 if(gotHighSpeed && points.size!=0){
-                    polyLines.add(generatePolyLine(points,Color.BLUE))
+                    points.add(LatLng(oldlat!!,oldlong!!))
+                    polyLines.add(generatePolyLine(points,Color.RED))
                     points.clear()
                     gotHighSpeed=false
                 }
@@ -134,7 +140,8 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
             if(sp>4){
                 if(!gotHighSpeed && points.size!=0){
-                    polyLines.add(generatePolyLine(points,Color.RED))
+                    points.add(LatLng(oldlat!!,oldlong!!))
+                    polyLines.add(generatePolyLine(points,Color.BLUE))
                     points.clear()
                     gotHighSpeed=true
                 }
@@ -142,23 +149,14 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             }
 
 
-            /*if(sp>4){
-                println("High speed")
-                if(lowSpeedPoly.points.size!=0){
-                    println("Added to low speed")
+            if(points.size!=0){
+                if(gotHighSpeed){
+                    polyLines.add(generatePolyLine(points,Color.RED))
+                }else{
+                    polyLines.add(generatePolyLine(points,Color.BLUE))
+                }
+            }
 
-                    polyLines.add(lowSpeedPoly)
-                    //lowSpeedPoly.points.clear()
-                }
-                highSpeedPoly.add(LatLng(lat,long))
-            }else{
-                println("Low speed")
-                if(highSpeedPoly.points.size!=0){
-                    polyLines.add(highSpeedPoly)
-                   // highSpeedPoly.points.clear()
-                }
-                lowSpeedPoly.add(LatLng(lat,long))
-            }*/
 
             if(i==roadStatusData!!.length()-1)
             {
