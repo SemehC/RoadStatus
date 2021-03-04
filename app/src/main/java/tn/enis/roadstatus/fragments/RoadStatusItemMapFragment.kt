@@ -92,25 +92,80 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         popup.show()
     }
     fun setDataToMap(){
-        val pathPolyline = PolylineOptions().color(Color.BLUE)
-        pathPolyline.startCap(RoundCap())
-        pathPolyline.endCap(RoundCap())
+        val lowSpeedPoly = PolylineOptions().color(Color.BLUE)
+        lowSpeedPoly.width(10f)
+        lowSpeedPoly.startCap(RoundCap())
+        lowSpeedPoly.endCap(RoundCap())
+
+        val highSpeedPoly = PolylineOptions().color(Color.RED)
+        highSpeedPoly.width(10f)
+        highSpeedPoly.startCap(RoundCap())
+        highSpeedPoly.endCap(RoundCap())
+
+        var polyLines= ArrayList<PolylineOptions>()
+
         val long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
         val lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
-        pathPolyline.add(LatLng(lat,long))
+
         gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting location"))?.tag="starting location"
         gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 20.0f))
         for (i in 1 until roadStatusData!!.length()){
             val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
             val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
-            pathPolyline.add(LatLng(lat,long))
+
+            val oldlong = roadStatusData?.getJSONObject((i-1).toString())?.get("Longitude") as Double
+            val oldlat = roadStatusData?.getJSONObject((i-1).toString())?.get("Latitude") as Double
+
+            val sp = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
+
+            if(sp<4){
+                polyLines.add(highSpeedPoly)
+                if(lowSpeedPoly.points.size==0){
+                    lowSpeedPoly.add(LatLng(oldlat,oldlong))
+                }
+                lowSpeedPoly.add(LatLng(lat,long))
+                highSpeedPoly.points.clear()
+            }
+            if(sp>4){
+                polyLines.add(lowSpeedPoly)
+                if(highSpeedPoly.points.size==0){
+                    highSpeedPoly.add(LatLng(oldlat,oldlong))
+                }
+                highSpeedPoly.add(LatLng(lat,long))
+                lowSpeedPoly.points.clear()
+            }
+
+
+            /*if(sp>4){
+                println("High speed")
+                if(lowSpeedPoly.points.size!=0){
+                    println("Added to low speed")
+
+                    polyLines.add(lowSpeedPoly)
+                    //lowSpeedPoly.points.clear()
+                }
+                highSpeedPoly.add(LatLng(lat,long))
+            }else{
+                println("Low speed")
+                if(highSpeedPoly.points.size!=0){
+                    polyLines.add(highSpeedPoly)
+                   // highSpeedPoly.points.clear()
+                }
+                lowSpeedPoly.add(LatLng(lat,long))
+            }*/
+
             if(i==roadStatusData!!.length()-1)
             {
                 gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Ending location"))?.tag="ending location"
             }
         }
-        pathPolyline.width(10f)
-        gmap?.addPolyline(pathPolyline)
+
+        polyLines.forEach {
+            println("Color : ${it.color} || size ${it.points.size}")
+            gmap?.addPolyline(it)
+        }
+
+
     }
 
 
