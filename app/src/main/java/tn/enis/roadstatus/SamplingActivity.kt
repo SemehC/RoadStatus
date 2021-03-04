@@ -25,7 +25,6 @@ import com.android.volley.toolbox.Volley
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.GoogleMapOptions
 import com.google.android.gms.maps.model.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_scanning.*
@@ -36,6 +35,7 @@ import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
 import tn.enis.roadstatus.listeners.AccelerometerListener
 import tn.enis.roadstatus.listeners.GyroscopeListener
+import tn.enis.roadstatus.other.Constants.GPS_ACCURACY
 import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
 import tn.enis.roadstatus.other.Utilities
 
@@ -75,7 +75,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var gmap: GoogleMap? = null
     private var polyline: PolylineOptions? = PolylineOptions()
     private var pathPolyLine: PolylineOptions? = PolylineOptions()
-    private var p: Polyline? = null
+    private var pathPolylineOnMap: Polyline? = null
 
 
     private var longitude: Double? = 0.0
@@ -126,7 +126,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private var trajectoryPolyLine: Polyline? = null
     private lateinit var gyroData: Array<Double>
     private lateinit var accData: Array<Double>
-    private var prevLocation: Location? = null
     private var deviceCameraManager: DeviceCameraManager? = null
 
 
@@ -237,44 +236,43 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
 
     private fun updateLocation() {
-        var distanceBetweenPositions: Float = 0f
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.interval = 50
-        locationRequest?.fastestInterval = 10
+        locationRequest?.smallestDisplacement= MAX_DISTANCE_BETWEEN_POINTS
+        locationRequest?.interval = 1000
+        locationRequest?.fastestInterval = 500
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.lastLocation
-                if (prevLocation == null) {
-                    prevLocation = loc
-                    longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                    altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                    latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                    speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                    polyline?.add(LatLng(latitude!!, longitude!!))
-                } else {
-                    try {
-                        distanceBetweenPositions = prevLocation!!.distanceTo(loc)
-                    } catch (e: Exception) {
-                        distanceBetweenPositions = 0f
+
+                    if(loc?.hasAccuracy() == true){
+                        if(loc?.accuracy!!< GPS_ACCURACY){
+                            setCurrentPositionMarker()
+                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
+                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                            polyline?.add(LatLng(latitude!!, longitude!!))
+                            setCurrentPositionMarker()
+                            setPolyLineOnMap()
+                            if(pathPolylineOnMap?.points?.size!! >0)
+                            {
+
+                                var pathPolylineNextPointLocation = Location("")
+                                pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(0)!!.latitude
+                                pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(0)!!.longitude
+                                if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 3f)
+                                {
+                                    pathPolylineOnMap!!.points.removeAt(0)
+                                }
+                            }
+                        }
                     }
 
-                    println("Distance between positions : " + distanceBetweenPositions)
-                    if (distanceBetweenPositions > MAX_DISTANCE_BETWEEN_POINTS) {
-                        setCurrentPositionMarker()
-                        longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                        altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                        latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                        speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                        polyline?.add(LatLng(latitude!!, longitude!!))
-                        prevLocation = loc
-                    }
 
-                    setCurrentPositionMarker()
-                    setPolyLineOnMap()
 
-                }
+
 
 
             }
@@ -486,7 +484,7 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     startScanning()
                     startTimer()
                     updateMapUI()
-
+                    polyline?.add(startingPosition)
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
                             LatLng(loc!!.latitude,
                                     loc!!.longitude), 20f))
@@ -540,8 +538,8 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
                         pathPolyLine?.add(LatLng(lat, lon))
                     }
-                    p?.remove()
-                    p = gmap?.addPolyline(pathPolyLine)
+                    pathPolylineOnMap?.remove()
+                    pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
                     updateMapUI()
 
                 },

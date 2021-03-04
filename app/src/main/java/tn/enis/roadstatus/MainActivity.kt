@@ -46,6 +46,8 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
             replace(R.id.fragmentContainer,homeFragment).commit()
         }
 
+
+
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigationView2)
         bottomNavigation.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
