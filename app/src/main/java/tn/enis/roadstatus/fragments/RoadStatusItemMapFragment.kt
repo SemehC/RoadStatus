@@ -104,12 +104,17 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
         var polyLines= ArrayList<PolylineOptions>()
 
+        var points=ArrayList<LatLng>()
+
         val long = roadStatusData?.getJSONObject("0")?.get("Longitude") as Double
         val lat = roadStatusData?.getJSONObject("0")?.get("Latitude") as Double
 
         gmap?.addMarker(MarkerOptions().position(LatLng(lat,long)).title("Starting location"))?.tag="starting location"
         gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(lat, long), 20.0f))
-        for (i in 1 until roadStatusData!!.length()){
+
+        var gotHighSpeed=false
+
+        for (i in 0 until roadStatusData!!.length()){
             val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
             val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
 
@@ -119,20 +124,21 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             val sp = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
 
             if(sp<4){
-                polyLines.add(highSpeedPoly)
-                if(lowSpeedPoly.points.size==0){
-                    lowSpeedPoly.add(LatLng(oldlat,oldlong))
+                if(gotHighSpeed && points.size!=0){
+                    polyLines.add(generatePolyLine(points,Color.BLUE))
+                    points.clear()
+                    gotHighSpeed=false
                 }
-                lowSpeedPoly.add(LatLng(lat,long))
-                highSpeedPoly.points.clear()
+                points.add(LatLng(lat,long))
             }
+
             if(sp>4){
-                polyLines.add(lowSpeedPoly)
-                if(highSpeedPoly.points.size==0){
-                    highSpeedPoly.add(LatLng(oldlat,oldlong))
+                if(!gotHighSpeed && points.size!=0){
+                    polyLines.add(generatePolyLine(points,Color.RED))
+                    points.clear()
+                    gotHighSpeed=true
                 }
-                highSpeedPoly.add(LatLng(lat,long))
-                lowSpeedPoly.points.clear()
+                points.add(LatLng(lat,long))
             }
 
 
@@ -165,6 +171,20 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             gmap?.addPolyline(it)
         }
 
+
+    }
+
+    private fun generatePolyLine(pts:ArrayList<LatLng>,color:Int):PolylineOptions{
+        val poly = PolylineOptions().color(color)
+        poly.width(10f)
+        poly.startCap(RoundCap())
+        poly.endCap(RoundCap())
+
+        pts.forEach {
+            poly.add(it)
+        }
+
+        return poly
 
     }
 
