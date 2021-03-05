@@ -1,6 +1,6 @@
 package tn.enis.roadstatus
 
-import  android.annotation.SuppressLint
+import   android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -273,12 +273,6 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
 
                         }
                     }
-
-
-
-
-
-
             }
         }
     }

@@ -60,8 +60,6 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             showMenu(v, R.menu.popup_menu)
         }
 
-
-
         roadStatusData = JSONObject(data.readLines().joinToString())
 
     }
@@ -131,6 +129,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             if(sp<4){
                 if(gotHighSpeed && points.size!=0){
                     points.add(LatLng(oldlat!!,oldlong!!))
+                    points.add(LatLng(lat,long))
                     polyLines.add(generatePolyLine(points,Color.RED))
                     points.clear()
                     gotHighSpeed=false
@@ -138,9 +137,11 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
                 points.add(LatLng(lat,long))
             }
 
-            if(sp>4){
+            if(sp>=4){
                 if(!gotHighSpeed && points.size!=0){
+
                     points.add(LatLng(oldlat!!,oldlong!!))
+                    points.add(LatLng(lat,long))
                     polyLines.add(generatePolyLine(points,Color.BLUE))
                     points.clear()
                     gotHighSpeed=true
