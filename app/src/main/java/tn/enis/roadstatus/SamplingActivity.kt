@@ -253,6 +253,10 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                             speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                             polyline?.add(LatLng(latitude!!, longitude!!))
+                            //move camera to current position
+                            gmap?.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
+                                    longitude!!), 20f))
                             setCurrentPositionMarker()
                             setPolyLineOnMap()
                             if(pathPolylineOnMap!=null){

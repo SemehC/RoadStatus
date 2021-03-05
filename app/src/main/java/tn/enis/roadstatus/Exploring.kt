@@ -54,7 +54,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var latitude: Double? = 0.0
 
     private var speedText: TextView? = null
-    private var timeText: TextView? = null
     private var locationManager: LocationManager? = null
     private var locationObtained: Boolean = false
     private val pattern = listOf(Dot(), Gap(20F), Dash(30F), Gap(20F))
@@ -81,7 +80,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
         //Getting Text views
         speedText = findViewById(R.id.speed_text_view)
-        timeText = findViewById(R.id.time_text_view)
 
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
@@ -167,6 +165,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                         latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                         speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                         polyline?.add(LatLng(latitude!!, longitude!!))
+                        //move camera to current position
+                        gmap?.animateCamera(
+                                    CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
+                                                                             longitude!!), 20f))
                         setCurrentPositionMarker()
                         setPolyLineOnMap()
                         if (pathPolylineOnMap != null) {
