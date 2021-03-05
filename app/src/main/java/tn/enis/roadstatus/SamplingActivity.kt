@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
 
-class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback,GoogleMap.OnPolylineClickListener {
+class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback,GoogleMap.OnPolylineClickListener {
 
     private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
@@ -128,16 +128,13 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
     private lateinit var accData: Array<Double>
     private var deviceCameraManager: DeviceCameraManager? = null
 
-
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
         createFolders()
-
         //Initializing Camera Manager
         deviceCameraManager = DeviceCameraManager(filesFolder!!, this, videoPreview)
-
         //Initializing Location Manager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 

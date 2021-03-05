@@ -1,11 +1,14 @@
 package tn.enis.roadstatus
 
 import android.Manifest
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -63,9 +66,31 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
                     }
                 }
                 R.id.start_scanning ->{
-                    val intent = Intent(this, SamplingActivity::class.java)
-                    startActivity(intent)
-                    finish()
+                    val builder = AlertDialog.Builder(this)
+
+
+                    // Set the alert dialog title
+                    builder.setTitle("Sélectionner le mode d'utilisation : ")
+                            .setItems(arrayOf("Collecte de donnees","Exploration",)
+                            ) { _, which ->
+                                var intent: Intent?
+                                if(which==0)
+                                {
+                                    intent = Intent(this, SamplingActivity::class.java)
+                                }
+                                else
+                                {
+                                    intent = Intent(this, Exploring::class.java)
+                                }
+                                startActivity(intent)
+                                finish()
+                            }
+                    // Finally, make the alert dialog using builder
+                    val dialog: AlertDialog = builder.create()
+
+                    // Display the alert dialog on app interface
+                    dialog.show()
+
                 }
                 R.id.navigation_stats -> {
                 }
@@ -78,13 +103,8 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
             true
         }
 
-
-
-
-
         requestPermissions()
     }
-
 
     fun openRoadStatusItem(id:Int){
         enteredFragment=true
