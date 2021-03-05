@@ -1,6 +1,7 @@
 package tn.enis.roadstatus
 
 import   android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -37,6 +38,7 @@ import tn.enis.roadstatus.listeners.AccelerometerListener
 import tn.enis.roadstatus.listeners.GyroscopeListener
 import tn.enis.roadstatus.other.Constants.GPS_ACCURACY
 import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
+import tn.enis.roadstatus.other.Constants.MIN_DISTANCE_TO_REMOVE_PT
 import tn.enis.roadstatus.other.Utilities
 
 import java.io.BufferedWriter
@@ -259,24 +261,46 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                                     longitude!!), 20f))
                             setCurrentPositionMarker()
                             setPolyLineOnMap()
-                            if(pathPolylineOnMap!=null){
-                                if(pathPolylineOnMap?.points?.size!! >0)
-                                {
-                                    var pathPolylineNextPointLocation = Location("")
-                                    pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(0)!!.latitude
-                                    pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(0)!!.longitude
-                                    if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 3f)
-                                    {
-                                        pathPolylineOnMap!!.points.removeAt(0)
-                                    }
-                                }
-                            }
+
 
                         }
                     }
             }
         }
     }
+
+    private fun checkNavigationPath(){
+
+        if(pathPolyLine!=null){
+            if(pathPolyLine?.points?.size!! >0)
+            {
+                var pathPolylineNextPointLocation = Location("")
+                var newLine = PolylineOptions()
+                for(i in 0 until pathPolyLine?.points?.size!!) {
+                    newLine.add(LatLng(pathPolyLine?.points?.get(i)?.latitude!!,pathPolyLine?.points?.get(i)?.longitude!!))
+                }
+
+                for(i in 0 until pathPolyLine?.points?.size!!){
+                    if(newLine.points.size>0){
+                        if(newLine?.points.indexOf(pathPolyLine?.points?.get(i))!=-1){
+                            val pos = newLine?.points[newLine?.points.indexOf(pathPolyLine?.points?.get(i))]
+
+                            pathPolylineNextPointLocation.latitude = pos.latitude
+                            pathPolylineNextPointLocation.longitude = pos.longitude
+
+                            if(loc?.distanceTo(pathPolylineNextPointLocation)!! > MIN_DISTANCE_TO_REMOVE_PT){
+                                newLine?.points.removeAt(newLine?.points.indexOf(pathPolyLine?.points?.get(i)))
+                            }
+                        }
+                    }
+
+                }
+                pathPolyLine = newLine
+                drawPathPolyline()
+            }
+        }
+    }
+
 
 
     private fun initUI() {
@@ -480,6 +504,17 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                     altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                     latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                     startingPosition = LatLng(latitude!!, longitude!!)
+
+                    progress_loader.isVisible=true
+
+                    val loadingThread = GlobalScope.launch(Dispatchers.Default) {
+                        delay(3000)
+                    }
+                    runBlocking {
+                        loadingThread.join()
+                    }
+                    progress_loader.isVisible=false
+
                     startScanning()
                     startTimer()
                     updateMapUI()
@@ -487,6 +522,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
                             LatLng(loc!!.latitude,
                                     loc!!.longitude), 20f))
+                    speed=0f
                 }
             }
         }
@@ -495,8 +531,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     override fun onMapClick(p0: LatLng?) {
     }
-
     override fun onMapLongClick(position: LatLng?) {
+
         url = "https://api.tomtom.com/routing/1/calculateRoute/"
         marker?.remove()
         marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
@@ -507,6 +543,9 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         request(url!!)
         updateMapUI()
 
+
+
+        checkNavigationPath()
 
     }
 
@@ -520,16 +559,29 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
     }
 
 
-    val pattern = listOf(Dot(),Gap(20F),Dash(30F),Gap(20F))
 
-    fun request(url: String) {
+    private fun drawPathPolyline(){
+        pathPolylineOnMap?.remove()
+        pathPolyLine?.color(Color.BLUE)
+        pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
+        pathPolylineOnMap?.tag="path"
+        pathPolylineOnMap?.isClickable=true
+        pathPolylineOnMap?.pattern=pattern
+        pathPolylineOnMap?.width = 20f
+    }
+
+
+
+    private val pattern = listOf(Dot(),Gap(20F),Dash(30F),Gap(20F))
+
+    private fun request(url: String) {
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,
                 { response ->
                     var jsonObject = JSONObject(response)
                     val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
-                    pathPolyLine = PolylineOptions().color(Color.BLUE)
+                    pathPolyLine = PolylineOptions()
                     pathPoints = jsonArray.getJSONObject(0)
                             .getJSONArray("legs")
                             .getJSONObject(0)
@@ -540,12 +592,9 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
                         pathPolyLine?.add(LatLng(lat, lon))
                     }
-                    pathPolylineOnMap?.remove()
-                    pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
-                    pathPolylineOnMap?.tag="path"
-                    pathPolylineOnMap?.isClickable=true
-                    pathPolylineOnMap?.pattern=pattern
-                    pathPolylineOnMap?.width = 20f
+                   // pathPolylineOnMap?.remove()
+                  //  pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
+                    drawPathPolyline()
                     updateMapUI()
 
                 },

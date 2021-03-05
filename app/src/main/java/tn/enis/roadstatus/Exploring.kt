@@ -1,6 +1,7 @@
 package tn.enis.roadstatus
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
@@ -20,6 +21,12 @@ import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
 import tn.enis.roadstatus.other.Constants
+<<<<<<< Updated upstream
+=======
+import tn.enis.roadstatus.other.RoadStatistics
+import tn.enis.roadstatus.other.ScanStatistics
+import tn.enis.roadstatus.other.Utilities
+>>>>>>> Stashed changes
 import java.io.File
 import kotlin.math.round
 
@@ -63,6 +70,16 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var startingPosition: LatLng? = null
     private var im: Marker? = null
     private var cp: Marker? = null
+<<<<<<< Updated upstream
+=======
+    private var trajectoryPolyLine: Polyline? = null
+
+
+
+
+    var allRoadsStatistics:ArrayList<ScanStatistics> = ArrayList()
+
+>>>>>>> Stashed changes
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_exploring)
@@ -96,7 +113,48 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
         updateLocation()
 
+        getDataFromDataBase()
 
+
+        println("Total scans : ${allRoadsStatistics.size}")
+
+    }
+
+
+    private fun getDataFromDataBase(){
+        val appFolderPath = this.getExternalFilesDir(null)?.absolutePath
+
+        val appFolder = File(appFolderPath, "PFA")
+
+        val allRoads = DatabaseHandler().getAllRoadStatus(this)
+        allRoads?.forEach {
+            val folderName=it!!.file_name
+            val data = File(appFolder.absolutePath+"/"+folderName+"/data.json")
+            val roadStatusData = JSONObject(data.readLines().joinToString())
+            val scanStatistics= ScanStatistics(ArrayList())
+
+            for(i in 1 until roadStatusData.length()){
+                val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
+                val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
+
+                val accX = roadStatusData?.getJSONObject(i.toString())?.get("Acc-x") as Double
+                val accY = roadStatusData?.getJSONObject(i.toString())?.get("Acc-y") as Double
+                val accZ = roadStatusData?.getJSONObject(i.toString())?.get("Acc-z") as Double
+
+                val gyroX = roadStatusData?.getJSONObject(i.toString())?.get("Gyro-x") as Double
+                val gyroY = roadStatusData?.getJSONObject(i.toString())?.get("Gyro-y") as Double
+                val gyroZ = roadStatusData?.getJSONObject(i.toString())?.get("Gyro-z") as Double
+
+                val speed = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
+
+                val roadStat = RoadStatistics(LatLng(lat,long), arrayOf(accX,accY,accZ),arrayOf(gyroX,gyroY,gyroZ),speed)
+
+                scanStatistics.roadsStatistics.add(roadStat)
+
+            }
+            allRoadsStatistics.add(scanStatistics)
+
+        }
     }
 
 
@@ -159,6 +217,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                                     CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
                                                                              longitude!!), 20f))
                         setCurrentPositionMarker()
+<<<<<<< Updated upstream
                         if (pathPolylineOnMap != null) {
                             if (pathPolylineOnMap?.points?.size!! > 0) {
                                 var pathPolylineNextPointLocation = Location("")
@@ -171,6 +230,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                                 }
                             }
                         }
+=======
+                        setPolyLineOnMap()
+                        checkNavigationPath()
+>>>>>>> Stashed changes
 
                     }
                 }
@@ -178,6 +241,43 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
         }
 
     }
+
+
+
+    private fun checkNavigationPath(){
+        if(pathPolylineOnMap!=null){
+            if(pathPolylineOnMap?.points?.size!! >0)
+            {
+                var pathPolylineNextPointLocation = Location("")
+                for(i in 0..pathPolyLine?.points?.size!!){
+                    pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(i)!!.latitude
+                    pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(i)!!.longitude
+                    if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 15f)
+                    {
+                        pathPolyLine!!.points.removeAt(i)
+                    }
+                }
+
+                drawPathPolyline()
+            }
+        }
+    }
+
+
+    private fun drawPathPolyline(){
+        pathPolylineOnMap?.remove()
+        pathPolyLine?.color(Color.BLUE)
+        pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
+        pathPolylineOnMap?.tag="path"
+        pathPolylineOnMap?.isClickable=true
+        pathPolylineOnMap?.pattern=pattern
+        pathPolylineOnMap?.width = 20f
+    }
+
+
+
+
+
     private fun startSpeedChecking() {
         GlobalScope.launch {
             checkSpeed()
@@ -337,5 +437,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
             marker?.remove()
             pathPolylineOnMap=null
         }
+    }
+
+
+    override fun onBackPressed() {
+        intent = Intent(this, MainActivity::class.java)
     }
 }
