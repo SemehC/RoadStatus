@@ -20,13 +20,13 @@ import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
+import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.other.Constants
-<<<<<<< Updated upstream
-=======
+
 import tn.enis.roadstatus.other.RoadStatistics
 import tn.enis.roadstatus.other.ScanStatistics
 import tn.enis.roadstatus.other.Utilities
->>>>>>> Stashed changes
+
 import java.io.File
 import kotlin.math.round
 
@@ -43,6 +43,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var loc: Location? = null
     private var speed: Float = 0f
     private var gmap: GoogleMap? = null
+    private var polyline: PolylineOptions? = PolylineOptions()
     private var pathPolyLine: PolylineOptions? = PolylineOptions()
     private var pathPolylineOnMap: Polyline? = null
 
@@ -70,8 +71,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var startingPosition: LatLng? = null
     private var im: Marker? = null
     private var cp: Marker? = null
-<<<<<<< Updated upstream
-=======
+
     private var trajectoryPolyLine: Polyline? = null
 
 
@@ -79,7 +79,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     var allRoadsStatistics:ArrayList<ScanStatistics> = ArrayList()
 
->>>>>>> Stashed changes
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_exploring)
@@ -217,7 +217,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                                     CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
                                                                              longitude!!), 20f))
                         setCurrentPositionMarker()
-<<<<<<< Updated upstream
+
                         if (pathPolylineOnMap != null) {
                             if (pathPolylineOnMap?.points?.size!! > 0) {
                                 var pathPolylineNextPointLocation = Location("")
@@ -230,10 +230,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                                 }
                             }
                         }
-=======
+
                         setPolyLineOnMap()
                         checkNavigationPath()
->>>>>>> Stashed changes
+
 
                     }
                 }
@@ -242,6 +242,11 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     }
 
+    private fun setPolyLineOnMap() {
+        trajectoryPolyLine?.remove()
+        trajectoryPolyLine = gmap?.addPolyline(polyline)
+
+    }
 
 
     private fun checkNavigationPath(){
