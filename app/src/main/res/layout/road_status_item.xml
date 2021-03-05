@@ -23,7 +23,6 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
             android:layout_toEndOf="@+id/road_status_item_image"
-            android:text="Line 1"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -37,7 +36,6 @@
             android:layout_marginTop="57dp"
 
             android:layout_toEndOf="@+id/road_status_item_image"
-            android:text="10/10/2014"
             android:textColor="@color/black"
             android:textSize="18sp" />
 

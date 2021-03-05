@@ -21,7 +21,7 @@
             android:id="@+id/road_status_item_tabs_info"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="General Info"
+            android:text="@string/road_status_item_tab_general_text"
             tools:layout_conversion_absoluteHeight="0dp"
             tools:layout_conversion_absoluteWidth="0dp"
             tools:layout_editor_absoluteX="0dp"
@@ -31,7 +31,7 @@
             android:id="@+id/road_status_item_tabs_map"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Map"
+            android:text="@string/road_status_item_tab_map_text"
             tools:layout_conversion_absoluteHeight="0dp"
             tools:layout_conversion_absoluteWidth="0dp"
              />

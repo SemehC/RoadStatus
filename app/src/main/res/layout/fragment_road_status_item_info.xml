@@ -36,7 +36,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Title"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
 
@@ -59,7 +58,7 @@
                 android:id="@+id/road_status_item_label_layout"
                 android:layout_width="200sp"
                 android:layout_height="72dp"
-                android:hint="Label Name"
+                android:hint="@string/road_status_item_label_edit"
                 app:errorEnabled="true"
                 app:helperText="helper"
                 app:helperTextEnabled="true"
@@ -81,19 +80,8 @@
                 android:layout_height="match_parent"
                 android:layout_marginLeft="18dp"
                 android:layout_weight="1"
-                android:text="Change" />
+                android:text="@string/update_road_status_item_label_button" />
         </LinearLayout>
-
-        <Button
-            android:id="@+id/push_to_server"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:text="Push to server"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/linearLayout"
-
-            />
 
 
         <RelativeLayout
@@ -102,7 +90,7 @@
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/push_to_server">
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout">
 
             <com.google.android.material.card.MaterialCardView
 
@@ -114,12 +102,11 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:tooltipText="Date"
+                    android:tooltipText="@string/road_status_item_date_tooltip"
                     android:id="@+id/road_status_item_time"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Time"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
 
@@ -146,12 +133,11 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:tooltipText="Date"
+                    android:tooltipText="@string/road_status_item_distance_tooltip"
                     android:id="@+id/road_status_item_distance"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Distance"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
 
@@ -178,12 +164,11 @@
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
-                    android:tooltipText="Date"
+                    android:tooltipText="@string/road_status_item_total_time_tooltip"
                     android:id="@+id/road_status_item_total_time"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="Distance"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
 

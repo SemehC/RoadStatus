@@ -11,29 +11,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:gravity="center"
         >
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="300dp"
-            android:background="#fece2f"
+            android:layout_height="250dp"
+            android:background="@color/colorPrimary"
             android:padding="20dp">
+
             <ImageView
                 android:id="@+id/profile_image"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_centerVertical="true"
-                android:src="@drawable/cringe"
-                />
+                app:srcCompat="@android:mipmap/sym_def_app_icon" />
             <TextView
-                android:id="@+id/fullname_field"
+                android:id="@+id/full_name_field"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="10dp"
                 android:layout_toRightOf="@+id/profile_image"
                 android:includeFontPadding="false"
-                android:text="Nasri Stop Int"
-                android:textColor="#000"
+                android:textColor="@color/white"
                 android:textSize="20sp" />
 
         </RelativeLayout>
@@ -48,7 +48,7 @@
                 android:layout_margin="10dp"
                 android:layout_weight="1"
                 android:layout_width="0dp"
-                app:cardBackgroundColor="#fece2f"
+                app:cardBackgroundColor="@color/cardview_dark_background"
                 app:cardElevation="10dp">
 
                 <RelativeLayout
@@ -62,26 +62,27 @@
                         android:layout_width="30dp" />
 
                     <TextView
-                        android:textColor="#000"
-                        android:id="@+id/payment_label"
+                        android:textColor="@color/white"
+                        android:id="@+id/registration_date_label"
                         android:includeFontPadding="false"
                         android:layout_centerInParent="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
-                        android:text="Date of Creation"
+                        android:text="Registration date"
                         android:layout_marginStart="10dp"
                         android:textSize="20sp" />
 
 
                     <TextView
-                        android:id="@+id/payment_desc"
+                        android:id="@+id/registration_date"
                         android:includeFontPadding="false"
-                        android:layout_below="@id/payment_label"
+                        android:layout_below="@id/registration_date_label"
                         android:layout_centerHorizontal="true"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
                         android:text="24 December 2010"
-
+                        android:textColor="@color/white"
+                        android:textStyle="bold"
                         android:textSize="20sp" />
 
                 </RelativeLayout>
@@ -89,75 +90,77 @@
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
-        <LinearLayout
-            android:layout_height="wrap_content"
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:orientation="vertical"
-            android:padding="20dp">
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:hint="Full Name"
-                android:id="@+id/full_name_profile"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:drawableLeft="@drawable/profil"
-                    android:drawablePadding="10dp"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:text="nasri pls"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-
-
-        </LinearLayout>
-        <LinearLayout
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginBottom="12dp"
+            android:hint="@string/full_name_hint_text">
 
-            <com.google.android.material.textfield.TextInputLayout
-
-                android:hint="Mail"
-                android:id="@+id/full_name_profile1"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/user_full_name"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="match_parent">
+                android:drawableLeft="@drawable/profile_icon"
+                android:drawablePadding="10dp"
+                />
 
-                <com.google.android.material.textfield.TextInputEditText
+        </com.google.android.material.textfield.TextInputLayout>
 
-                    android:drawablePadding="10dp"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:text="nasri pls"
-                    android:drawableLeft="@drawable/mail"/>
-
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
-        <LinearLayout
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_width="match_parent"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginBottom="12dp"
+            android:hint="@string/email_hint_text">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:hint="Password"
-                android:id="@+id/full_name_profile2"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/user_email_address"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="match_parent">
+                android:drawableLeft="@drawable/mail"
+                android:drawablePadding="10dp"
+                />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:drawableLeft="@drawable/pass"
-                    android:drawablePadding="10dp"
-                    android:layout_height="wrap_content"
-                    android:layout_width="match_parent"
-                    android:text="nasri pls"/>
+        </com.google.android.material.textfield.TextInputLayout>
 
-            </com.google.android.material.textfield.TextInputLayout>
-        </LinearLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginBottom="12dp"
+            android:hint="Password"
+
+            app:endIconMode="password_toggle">
+            >
+
+            <com.google.android.material.textfield.TextInputEditText
+
+                android:inputType="textPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/pass"
+                android:drawablePadding="10dp"
+                />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Spinner
+            android:id="@+id/cars_spinner"
+            android:layout_width="149dp"
+            android:layout_height="40dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+
+
+            />
+
     </LinearLayout>
-
 
 </ScrollView>

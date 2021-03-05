@@ -4,31 +4,31 @@
     <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/home_nav_icon"
-        android:title="Home"
+        android:title="@string/nav_menu_home"
         />
 
     <item
         android:id="@+id/navigation_profile"
         android:icon="@drawable/profile_nav_icon"
-        android:title="Profile"
+        android:title="@string/nav_menu_profile"
         />
 
     <item
         android:id="@+id/start_scanning"
         android:icon="@drawable/start_scanning_icon"
-        android:title="Start Scanning"
+        android:title="@string/nav_menu_start_scanning"
         />
 
     <item
         android:id="@+id/navigation_stats"
         android:icon="@drawable/stats_nav_icon"
-        android:title="Statistics"
+        android:title="@string/nav_menu_statistics"
         />
 
     <item
         android:id="@+id/navigation_settings"
         android:icon="@drawable/settings_nav_icon"
-        android:title="Settings"
+        android:title="@string/nav_menu_settings"
         />
 
 </menu>
