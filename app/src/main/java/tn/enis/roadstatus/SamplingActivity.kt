@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
 
-class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback {
+class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback,GoogleMap.OnPolylineClickListener {
 
     private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
@@ -148,12 +148,14 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
         mapView.isClickable = true
+
         mapView.getMapAsync {
             gmap = it
             gmap?.setOnMapClickListener(this)
             gmap?.setOnMapLongClickListener(this)
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnMapLoadedCallback(this)
+            gmap?.setOnPolylineClickListener(this)
             gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
         }
         satelliteStyleButton.setOnClickListener {
@@ -256,17 +258,19 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                             polyline?.add(LatLng(latitude!!, longitude!!))
                             setCurrentPositionMarker()
                             setPolyLineOnMap()
-                            if(pathPolylineOnMap?.points?.size!! >0)
-                            {
-
-                                var pathPolylineNextPointLocation = Location("")
-                                pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(0)!!.latitude
-                                pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(0)!!.longitude
-                                if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 3f)
+                            if(pathPolylineOnMap!=null){
+                                if(pathPolylineOnMap?.points?.size!! >0)
                                 {
-                                    pathPolylineOnMap!!.points.removeAt(0)
+                                    var pathPolylineNextPointLocation = Location("")
+                                    pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(0)!!.latitude
+                                    pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(0)!!.longitude
+                                    if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 3f)
+                                    {
+                                        pathPolylineOnMap!!.points.removeAt(0)
+                                    }
                                 }
                             }
+
                         }
                     }
 
@@ -520,6 +524,9 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                 null)
     }
 
+
+    val pattern = listOf(Dot(),Gap(20F),Dash(30F),Gap(20F))
+
     fun request(url: String) {
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
@@ -540,6 +547,10 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
                     }
                     pathPolylineOnMap?.remove()
                     pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
+                    pathPolylineOnMap?.tag="path"
+                    pathPolylineOnMap?.isClickable=true
+                    pathPolylineOnMap?.pattern=pattern
+                    pathPolylineOnMap?.width = 20f
                     updateMapUI()
 
                 },
@@ -571,6 +582,14 @@ class SamplingActivity : AppCompatActivity(), GoogleMap.OnMapClickListener, Goog
         gmap?.clear()
         mapView.onDestroy()
         super.onDestroy()
+    }
+
+    override fun onPolylineClick(p0: Polyline?) {
+        if(p0?.tag=="path"){
+            pathPolylineOnMap?.remove()
+            marker?.remove()
+            pathPolylineOnMap=null
+        }
     }
 
 }
