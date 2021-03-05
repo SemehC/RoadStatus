@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
                                     intent = Intent(this, Exploring::class.java)
                                 }
                                 startActivity(intent)
-                                finish()
+                                
                             }
                     // Finally, make the alert dialog using builder
                     val dialog: AlertDialog = builder.create()

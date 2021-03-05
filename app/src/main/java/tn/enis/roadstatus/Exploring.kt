@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -445,7 +446,5 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
 
 
-    override fun onBackPressed() {
-        intent = Intent(this, MainActivity::class.java)
-    }
+
 }
