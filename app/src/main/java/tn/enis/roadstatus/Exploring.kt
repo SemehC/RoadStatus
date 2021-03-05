@@ -7,9 +7,7 @@ import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
-import android.widget.ImageButton
 import android.widget.TextView
-import android.widget.Toast
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
@@ -21,14 +19,8 @@ import kotlinx.android.synthetic.main.activity_scanning.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
-import tn.enis.roadstatus.db.DatabaseHandler
-import tn.enis.roadstatus.db.RoadStatus
-import tn.enis.roadstatus.listeners.AccelerometerListener
-import tn.enis.roadstatus.listeners.GyroscopeListener
 import tn.enis.roadstatus.other.Constants
-import tn.enis.roadstatus.other.Utilities
 import java.io.File
-import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
 
@@ -44,7 +36,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var loc: Location? = null
     private var speed: Float = 0f
     private var gmap: GoogleMap? = null
-    private var polyline: PolylineOptions? = PolylineOptions()
     private var pathPolyLine: PolylineOptions? = PolylineOptions()
     private var pathPolylineOnMap: Polyline? = null
 
@@ -72,7 +63,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var startingPosition: LatLng? = null
     private var im: Marker? = null
     private var cp: Marker? = null
-    private var trajectoryPolyLine: Polyline? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_exploring)
@@ -164,13 +154,11 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                         altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                         latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                         speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                        polyline?.add(LatLng(latitude!!, longitude!!))
                         //move camera to current position
                         gmap?.animateCamera(
                                     CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
                                                                              longitude!!), 20f))
                         setCurrentPositionMarker()
-                        setPolyLineOnMap()
                         if (pathPolylineOnMap != null) {
                             if (pathPolylineOnMap?.points?.size!! > 0) {
                                 var pathPolylineNextPointLocation = Location("")
@@ -197,10 +185,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
     private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
-            if (loc?.hasSpeed() == true) {
-                speed = loc?.speed!!
+            speed = if (loc?.hasSpeed() == true) {
+                loc?.speed!!
             } else {
-                speed = 0f
+                0f
             }
             updateUI()
         }
@@ -229,15 +217,8 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                 }
             )
         }
-        gmap?.addPolyline(polyline)
     }
 
-
-    private fun setPolyLineOnMap() {
-        trajectoryPolyLine?.remove()
-        trajectoryPolyLine = gmap?.addPolyline(polyline)
-
-    }
 
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
@@ -258,7 +239,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                     latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                     startingPosition = LatLng(latitude!!, longitude!!)
                     updateMapUI()
-                    polyline?.add(startingPosition)
                     gmap?.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
                         LatLng(loc!!.latitude,
@@ -267,7 +247,6 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
             }
         }
     }
-    //define the listener
 
     override fun onMapClick(p0: LatLng?) {
     }
