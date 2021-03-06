@@ -9,104 +9,97 @@
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="12dp">
 
 
-        <RelativeLayout
-            android:id="@+id/topArea"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="@drawable/gradient"
-            app:layout_constraintTop_toTopOf="parent">
-
-
-
-            <TextView
-                android:id="@+id/myDashboard"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_margin="20dp"
-                android:text="Settings"
-                android:textColor="@android:color/white"
-                android:textSize="25sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/dashboard_adminName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/myDashboard"
-                android:layout_alignEnd="@id/myDashboard"
-                android:layout_marginTop="-20dp"
-                android:text="Nasri Stop Int "
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold" />
-
-
-            <ImageView
-                android:layout_width="193dp"
-                android:layout_height="160dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginEnd="10dp"
-                android:layout_marginBottom="10dp"
-                android:layout_toRightOf="@id/myDashboard"
-                android:src="@drawable/cringe" />
-
-
-        </RelativeLayout>
-
-
-        <HorizontalScrollView
-            android:id="@+id/gridLayout"
+        <LinearLayout
+            android:id="@+id/linearLayout2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="1"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.47"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/topArea"
-            app:layout_constraintVertical_bias="0.0">
+            app:layout_constraintTop_toTopOf="parent">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/language_text_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/language_label"
+                android:textSize="24sp" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="Notifica" />
+            <Spinner
+                android:id="@+id/language_spinner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:spinnerMode="dropdown" />
+        </LinearLayout>
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="400dp"
-                    android:layout_height="match_parent"
-                    android:checked="true"
-                    android:switchPadding="50mm"
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
 
-                    android:text="Notification" />
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Units"
+                android:textSize="24sp" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="match_parent"
+            <com.google.android.material.chip.ChipGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip4"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:enabled="true"
-                    android:text="bruh" />
+                    android:checkable="true"
+                    android:text="KM/H" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="Notifica" />
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="MP/H" />
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:text="Notific" />
-            </LinearLayout>
-        </HorizontalScrollView>
+            </com.google.android.material.chip.ChipGroup>
 
+        </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="24dp"
+            android:orientation="horizontal"
+            app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Default mode"
+                android:textSize="24sp" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

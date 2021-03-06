@@ -1,7 +1,6 @@
 package tn.enis.roadstatus
 
 import   android.annotation.SuppressLint
-import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -13,11 +12,9 @@ import android.location.Location
 import android.location.LocationManager
 
 import android.os.Bundle
+import android.os.SystemClock
+import android.widget.*
 
-import android.widget.Button
-import android.widget.ImageButton
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import com.android.volley.Request
@@ -47,7 +44,6 @@ import java.io.FileWriter
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
 import kotlin.math.round
 
 
@@ -87,9 +83,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
     private var timerStarted: Long? = 0L
     private var timer: Long = 0L
     private var speedText: TextView? = null
-    private var timeText: TextView? = null
+    private var chrono: Chronometer? = null
 
-    private var samlplingDelay: Long = 1000L
 
     private var gManager: GyroscopeListener = GyroscopeListener()
     private var accManager: AccelerometerListener = AccelerometerListener()
@@ -121,6 +116,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         findViewById(R.id.cameraButton)
     }
 
+
     private lateinit var pathPoints: JSONArray
     private var startingPosition: LatLng? = null
     private var im: Marker? = null
@@ -142,7 +138,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
         //Getting Text views
         speedText = findViewById(R.id.speed_text_view)
-        timeText = findViewById(R.id.time_text_view)
+        chrono = findViewById(R.id.time_text_view)
 
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
@@ -249,12 +245,23 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
                     if(loc?.hasAccuracy() == true){
                         if(loc?.accuracy!!< GPS_ACCURACY){
+
+
                             setCurrentPositionMarker()
                             longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                             altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                             latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-                            speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+
+
+
+
+                            gyroData = gManager.getData()
+                            accData = accManager.getData()
+                            gotData()
+
+
                             polyline?.add(LatLng(latitude!!, longitude!!))
+
                             //move camera to current position
                             gmap?.animateCamera(
                                 CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
@@ -349,11 +356,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         }
     }
 
-    private fun startScanning() {
-        GlobalScope.launch {
-            scanning()
-        }
-    }
+
 
     override fun onStart() {
         super.onStart()
@@ -400,20 +403,12 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         mapView?.onSaveInstanceState(outState)
     }
 
-    @SuppressLint("MissingPermission")
-    private suspend fun scanning() {
-        while (stillScanning) {
-            timer = System.currentTimeMillis() - timerStarted!!
-            gyroData = gManager.getData()
-            accData = accManager.getData()
-            gotData()
-            delay(samlplingDelay)
-        }
-    }
+
 
     private fun saveToDatabase(fName: String) {
         gmap?.snapshot {
-            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, timer, getTravelDistance(), fName), this)
+            val totalElapsedTime = SystemClock.elapsedRealtime() - chrono?.base!!
+            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, totalElapsedTime, getTravelDistance(), fName), this)
 
         }
 
@@ -425,26 +420,20 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     private fun gotData() {
         GlobalScope.launch {
-            checkSpeed()
             addData()
-            updateUI()
         }
+
     }
 
-    private suspend fun checkSpeed() {
-        withContext(Dispatchers.Default) {
-            if (loc?.hasSpeed() == true) {
-                speed = loc?.speed!!
-            } else {
-                speed = 0f
+
+
+    private fun updateUI() {
+        GlobalScope.launch(Dispatchers.Main) {
+            while(true){
+                speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
+                speedText?.text = (round(speed) * 3.6).toString() + " KM/H"
+                delay(1000)
             }
-        }
-    }
-
-    private suspend fun updateUI() {
-        withContext(Dispatchers.Main) {
-            speedText?.text = (round(speed) * 3.6).toString() + " KM/H"
-            timeText?.text = TimeUnit.MILLISECONDS.toSeconds(timer).toString()
         }
     }
 
@@ -483,9 +472,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     }
 
-    private fun startTimer() {
-        timerStarted = System.currentTimeMillis()
-    }
+
 
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
@@ -505,24 +492,17 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                     latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
                     startingPosition = LatLng(latitude!!, longitude!!)
 
-                    progress_loader.isVisible=true
-
-                    val loadingThread = GlobalScope.launch(Dispatchers.Default) {
-                        delay(3000)
-                    }
-                    runBlocking {
-                        loadingThread.join()
-                    }
-                    progress_loader.isVisible=false
-
-                    startScanning()
-                    startTimer()
+                    timerStarted = System.currentTimeMillis()
+                    chrono?.base=SystemClock.elapsedRealtime()
+                    chrono?.start()
+                    updateUI()
+                    speed=0f
                     updateMapUI()
                     polyline?.add(startingPosition)
                     gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
                             LatLng(loc!!.latitude,
                                     loc!!.longitude), 20f))
-                    speed=0f
+
                 }
             }
         }
@@ -538,13 +518,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
         // var response = URL(url).readText()
-
-
         request(url!!)
         updateMapUI()
-
-
-
         checkNavigationPath()
 
     }
@@ -635,6 +610,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
             pathPolylineOnMap=null
         }
     }
+
 
 }
 

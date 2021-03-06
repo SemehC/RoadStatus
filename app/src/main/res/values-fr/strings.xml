@@ -1,33 +1,40 @@
 <resources>
-    <string name="app_name">Road Status</string>
+    <string name="app_name">Etat de la route</string>
     <string name="maps_api_key">AIzaSyB0xr5peRqDNM8k2LdEDrLWXQ4lqhFEkiQ</string>
     <string name="directions_api_key">Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi</string>
     <string name="speed">%1$d K/H</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <!-- Scanning mode -->
-    <string name="stop_scanning_button_text">Stop</string>
+    <string name="stop_scanning_button_text">Arrêter</string>
 
     <!-- User profile -->
     <string name="email_hint_text">Email</string>
-    <string name="full_name_hint_text">Full name</string>
-
+    <string name="full_name_hint_text">nom complet</string>
+    <string name="registration_date_label">Date d\'inscription</string>
+    <string name="password_hint_text">Mot de pass</string>
 
     <!-- Road status item -->
-    <string name="road_status_item_tab_general_text">General info</string>
-    <string name="road_status_item_tab_map_text">Map</string>
-    <string name="road_status_item_label_edit">Label</string>
-    <string name="update_road_status_item_label_button">Change</string>
+    <string name="road_status_item_tab_general_text">informations générales</string>
+    <string name="road_status_item_tab_map_text">carte</string>
+    <string name="road_status_item_label_edit">étiqueter</string>
+    <string name="update_road_status_item_label_button">changes</string>
     <string name="road_status_item_date_tooltip">Date</string>
     <string name="road_status_item_distance_tooltip">Distance</string>
-    <string name="road_status_item_total_time_tooltip">Total time</string>
+    <string name="road_status_item_total_time_tooltip">Temps total</string>
 
 
     <!-- Bottom Nav menu -->
-    <string name="nav_menu_home">Home</string>
-    <string name="nav_menu_profile">Profile</string>
-    <string name="nav_menu_start_scanning">Start Scanning</string>
+    <string name="nav_menu_home">Accueil</string>
+    <string name="nav_menu_profile">Profil</string>
+    <string name="nav_menu_start_scanning">commencer</string>
     <string name="nav_menu_statistics">Statistics</string>
-    <string name="nav_menu_settings">Settings</string>
+    <string name="nav_menu_settings">Statistiques</string>
 
+    <!-- Settings menu -->
+    <string name="choose_language_label">Choisissez la langue</string>
+
+    <string name="language_label">Langue</string>
+    <string name="english_label">Anglais</string>
+    <string name="french_label">Francais</string>
 </resources>

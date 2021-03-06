@@ -44,7 +44,6 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
         val settingsFragment = SettingsFragment()
 
         homeFragment.mainActivity=this
-
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragmentContainer,homeFragment).commit()
         }
@@ -115,8 +114,6 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     }
 
 
-
-
     fun returnHome(){
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragmentContainer,homeFragment).commit()
@@ -124,7 +121,6 @@ class MainActivity : AppCompatActivity(),EasyPermissions.PermissionCallbacks {
     }
 
     override fun onBackPressed() {
-
         if(enteredFragment){
             returnHome()
             enteredFragment=false

@@ -11,6 +11,8 @@
     <!-- User profile -->
     <string name="email_hint_text">Email</string>
     <string name="full_name_hint_text">Full name</string>
+    <string name="registration_date_label">Registration date</string>
+    <string name="password_hint_text">Password</string>
 
 
     <!-- Road status item -->
@@ -30,4 +32,9 @@
     <string name="nav_menu_statistics">Statistics</string>
     <string name="nav_menu_settings">Settings</string>
 
+    <!-- Settings menu -->
+    <string name="choose_language_label">Choose language</string>
+    <string name="language_label">Language</string>
+    <string name="english_label">English</string>
+    <string name="french_label">French</string>
 </resources>
