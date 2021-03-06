@@ -57,8 +57,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
     private val dbManager by lazy {
         DatabaseHandler()
     }
-
-
     private var url: String? = null
     private var isRecording = false
     private var accSensor: Sensor? = null
@@ -103,10 +101,10 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
     private val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
     }
-    private val satelliteStyleButton: Button by lazy {
+    private val satelliteStyleButton: RadioButton by lazy {
         findViewById(R.id.satelliteStyle)
     }
-    private val mapStyleButton: Button by lazy {
+    private val mapStyleButton: RadioButton by lazy {
         findViewById(R.id.mapStyle)
     }
     private val startStopRecording: ImageButton by lazy {
@@ -151,7 +149,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnMapLoadedCallback(this)
             gmap?.setOnPolylineClickListener(this)
-            gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
+            gmap?.mapType = GoogleMap.MAP_TYPE_NORMAL
         }
         satelliteStyleButton.setOnClickListener {
             gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE

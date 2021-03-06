@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 
 import android.view.View
 import android.widget.Button
+import android.widget.RadioButton
 import android.widget.Toast.*
 import androidx.annotation.MenuRes
 
@@ -37,6 +38,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     var roadStatusData: JSONObject? = null
     var mapView: MapView? = null
     var lastMarker: Marker? = null
+
     private var mapTouchPosition: LatLng? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -44,6 +46,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         mapView = view.findViewById(R.id.road_status_item_mapView)
         //initialize the map
         mapView?.onCreate(savedInstanceState)
+
         //set it clickable
         mapView?.isClickable = true
         mapView?.getMapAsync {
@@ -55,6 +58,18 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnPolylineClickListener(this)
             gmap?.setOnMarkerClickListener(this)
+            gmap?.mapType = GoogleMap.MAP_TYPE_NORMAL
+        }
+
+        val satelliteStyleButton: RadioButton = view.findViewById(R.id.satelliteStyle)
+
+        val mapStyleButton: RadioButton = view.findViewById(R.id.mapStyle)
+
+        satelliteStyleButton.setOnClickListener {
+            gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
+        }
+        mapStyleButton.setOnClickListener {
+            gmap?.mapType = GoogleMap.MAP_TYPE_NORMAL
         }
 
         //Get the data out of the database for a particular route clicked in the home activity

@@ -9,11 +9,40 @@
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="407dp"
+        android:layout_height="632dp"
+        app:layout_constraintBottom_toTopOf="@+id/speed_text_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroup2" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup2"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <RadioButton
+            android:id="@+id/mapStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+
+            android:checked="true"
+            android:text="Default Map"></RadioButton>
+
+        <RadioButton
+            android:id="@+id/satelliteStyle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Satellite Map" />
+    </RadioGroup>
 
     <TextView
         android:id="@+id/speed_text_view"
@@ -21,33 +50,11 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="84dp"
         android:layout_marginEnd="289dp"
-        android:layout_marginBottom="16dp"
         android:layout_weight="1"
         android:text="speed"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/mapStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="11dp"
-        android:layout_marginTop="75dp"
-        android:layout_marginBottom="7dp"
-        android:text="Map"
-        app:layout_constraintBottom_toTopOf="@+id/satelliteStyle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/satelliteStyle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="7dp"
-        android:text="Satellite"
-        app:layout_constraintTop_toBottomOf="@+id/mapStyle"
-        tools:layout_editor_absoluteX="11dp" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

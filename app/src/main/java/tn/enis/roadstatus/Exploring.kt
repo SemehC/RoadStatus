@@ -8,6 +8,7 @@ import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import com.android.volley.Request
@@ -62,10 +63,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var appFolder: File? = null
     private var filesFolder: File? = null
 
-    private val satelliteStyleButton: Button by lazy {
+    private val satelliteStyleButton: RadioButton by lazy {
         findViewById(R.id.satelliteStyle)
     }
-    private val mapStyleButton: Button by lazy {
+    private val mapStyleButton: RadioButton by lazy {
         findViewById(R.id.mapStyle)
     }
     private lateinit var pathPoints: JSONArray
@@ -100,7 +101,8 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
             gmap?.setOnCameraIdleListener(this)
             gmap?.setOnMapLoadedCallback(this)
             gmap?.setOnPolylineClickListener(this)
-            gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
+            gmap?.mapType = GoogleMap.MAP_TYPE_NORMAL
+
         }
         satelliteStyleButton.setOnClickListener {
             gmap?.mapType = GoogleMap.MAP_TYPE_SATELLITE
@@ -129,7 +131,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
         val allRoads = DatabaseHandler().getAllRoadStatus(this)
         allRoads?.forEach {
-            val folderName=it!!.file_name
+            val folderName= it.file_name
             val data = File(appFolder.absolutePath+"/"+folderName+"/data.json")
             val roadStatusData = JSONObject(data.readLines().joinToString())
             val scanStatistics= ScanStatistics(ArrayList())
