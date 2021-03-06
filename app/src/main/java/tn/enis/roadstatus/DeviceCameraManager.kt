@@ -19,8 +19,8 @@ import java.io.File
 import java.io.IOException
 
 @Suppress("DEPRECATION")
-class DeviceCameraManager(private val filesFolder: File,private val context: Context,private val videoPreview:TextureView) {
-
+class DeviceCameraManager(private val filesFolder: File, private val context: Context, private val videoPreview: TextureView)
+{
     private lateinit var backgroundThread: HandlerThread
     private lateinit var backgroundHandler: Handler
     private lateinit var cameraDevice: CameraDevice
@@ -34,11 +34,10 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
     }
 
     private var recordNumber: Int = 0
+
     //Get camera state (opened / disconnected / error)
     private val deviceStateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(p0: CameraDevice) {
-
-
 
             cameraDevice = p0
             previewSession()
@@ -46,7 +45,6 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
         }
 
         override fun onDisconnected(p0: CameraDevice) {
-
             p0.close()
         }
 
@@ -71,21 +69,26 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
             add(recordSurface)
         }
 
-        cameraDevice.createCaptureSession(surfaces,
-                object : CameraCaptureSession.StateCallback() {
-                    override fun onConfigureFailed(session: CameraCaptureSession) {
-                        Log.e(TAG, "creating record session failed!")
-                    }
+        cameraDevice.createCaptureSession(
+            surfaces,
+            object : CameraCaptureSession.StateCallback() {
+                override fun onConfigureFailed(session: CameraCaptureSession) {
+                    Log.e(TAG, "creating record session failed!")
+                }
 
-                    override fun onConfigured(session: CameraCaptureSession) {
-                        captureSession = session
-                        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
+                override fun onConfigured(session: CameraCaptureSession) {
+                    captureSession = session
+                    captureRequestBuilder.set(
+                        CaptureRequest.CONTROL_AF_MODE,
+                        CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                    )
+                    captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
 
-                        mediaRecorder.start()
-                    }
+                    mediaRecorder.start()
+                }
 
-                }, backgroundHandler)
+            }, backgroundHandler
+        )
     }
 
     //Method to preview the camera output on the "Box" designated for it
@@ -96,22 +99,31 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
             val surface = Surface(surfaceTexture)
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
             captureRequestBuilder.addTarget(surface)
-            cameraDevice.createCaptureSession(mutableListOf(surface),
-                    object : CameraCaptureSession.StateCallback() {
-                        override fun onConfigureFailed(session: CameraCaptureSession) {
-                            Log.e(TAG, "Failed to create capture session")
-                        }
+            cameraDevice.createCaptureSession(
+                mutableListOf(surface),
+                object : CameraCaptureSession.StateCallback() {
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        Log.e(TAG, "Failed to create capture session")
+                    }
 
-                        override fun onConfigured(session: CameraCaptureSession) {
-                            captureSession = session
-                            try {
-                                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                                captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
-                            } catch (e: CameraAccessException) {
-                                Log.e(TAG, e.toString())
-                            }
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        captureSession = session
+                        try {
+                            captureRequestBuilder.set(
+                                CaptureRequest.CONTROL_AF_MODE,
+                                CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE
+                            )
+                            captureSession.setRepeatingRequest(
+                                captureRequestBuilder.build(),
+                                null,
+                                null
+                            )
+                        } catch (e: CameraAccessException) {
+                            Log.e(TAG, e.toString())
                         }
-                    }, null)
+                    }
+                }, null
+            )
 
         } catch (e: CameraAccessException) {
             Log.e(TAG, e.toString())
@@ -126,8 +138,9 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
             cameraDevice.close()
     }
 
+    //Threads used to get camera's messages
     fun startBackgroundThread() {
-        backgroundThread = HandlerThread("Camara2 Kotlin").also { it.start() }
+        backgroundThread = HandlerThread("Camera").also { it.start() }
         backgroundHandler = Handler(backgroundThread.looper)
     }
 
@@ -145,6 +158,7 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
         private val TAG = SamplingActivity::class.qualifiedName
     }
 
+    //Get the camera's characteristics (front or back camera)
     fun <T> cameraCharacteristics(cameraId: String, key: CameraCharacteristics.Key<T>): T {
         val characteristics = cameraManager.getCameraCharacteristics(cameraId)
         return when (key) {
@@ -153,7 +167,7 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
         }
     }
 
-     val surfaceListener = object : TextureView.SurfaceTextureListener {
+    val surfaceListener = object : TextureView.SurfaceTextureListener {
         override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
 
         }
@@ -165,19 +179,26 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
 
     }
 
+    //Select which camera to use
     fun cameraId(lens: Int): String {
         var deviceId = listOf<String>()
         try {
             val cameraIdList = cameraManager.cameraIdList
-            deviceId = cameraIdList.filter { lens == cameraCharacteristics(it, CameraCharacteristics.LENS_FACING) }
+            deviceId = cameraIdList.filter {
+                lens == cameraCharacteristics(
+                    it,
+                    CameraCharacteristics.LENS_FACING
+                )
+            }
         } catch (e: CameraAccessException) {
             Log.e(TAG, e.toString())
         }
         return deviceId[0]
     }
 
+    //Connect to the camera and open it
     @SuppressLint("MissingPermission")
-     fun connectCamera() {
+    fun connectCamera() {
         val deviceId = cameraId(CameraCharacteristics.LENS_FACING_BACK)
         Log.e(TAG, "deviceId: $deviceId")
         try {
@@ -189,8 +210,9 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
         }
     }
 
+    //Setting up the media recorder to capture video
     @Throws(IOException::class)
-     fun setupMediaRecorder(filesFolder : File) {
+    fun setupMediaRecorder(filesFolder: File) {
         mediaRecorder.apply {
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -204,7 +226,8 @@ class DeviceCameraManager(private val filesFolder: File,private val context: Con
         }
     }
 
-    public fun stopRecording() {
+    //stopping the video capture
+    fun stopRecording() {
         mediaRecorder.apply {
             stop()
             reset()

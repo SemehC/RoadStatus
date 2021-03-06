@@ -77,9 +77,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var trajectoryPolyLine: Polyline? = null
 
 
-
-
-    var allRoadsStatistics:ArrayList<ScanStatistics> = ArrayList()
+    var allRoadsStatistics: ArrayList<ScanStatistics> = ArrayList()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,19 +122,19 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
 
 
-    private fun getDataFromDataBase(){
+    private fun getDataFromDataBase() {
         val appFolderPath = this.getExternalFilesDir(null)?.absolutePath
 
         val appFolder = File(appFolderPath, "PFA")
 
         val allRoads = DatabaseHandler().getAllRoadStatus(this)
         allRoads?.forEach {
-            val folderName= it.file_name
-            val data = File(appFolder.absolutePath+"/"+folderName+"/data.json")
+            val folderName = it.file_name
+            val data = File(appFolder.absolutePath + "/" + folderName + "/data.json")
             val roadStatusData = JSONObject(data.readLines().joinToString())
-            val scanStatistics= ScanStatistics(ArrayList())
+            val scanStatistics = ScanStatistics(ArrayList())
 
-            for(i in 1 until roadStatusData.length()){
+            for (i in 1 until roadStatusData.length()) {
                 val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
                 val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
 
@@ -150,7 +148,12 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
                 val speed = roadStatusData?.getJSONObject(i.toString())?.get("speed") as Double
 
-                val roadStat = RoadStatistics(LatLng(lat,long), arrayOf(accX,accY,accZ),arrayOf(gyroX,gyroY,gyroZ),speed)
+                val roadStat = RoadStatistics(
+                    LatLng(lat, long),
+                    arrayOf(accX, accY, accZ),
+                    arrayOf(gyroX, gyroY, gyroZ),
+                    speed
+                )
 
                 scanStatistics.roadsStatistics.add(roadStat)
 
@@ -217,8 +220,13 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                         speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
                         //move camera to current position
                         gmap?.animateCamera(
-                                    CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
-                                                                             longitude!!), 20f))
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    latitude!!,
+                                    longitude!!
+                                ), 20f
+                            )
+                        )
                         setCurrentPositionMarker()
 
                         if (pathPolylineOnMap != null) {
@@ -252,16 +260,16 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
 
 
-    private fun checkNavigationPath(){
-        if(pathPolylineOnMap!=null){
-            if(pathPolylineOnMap?.points?.size!! >0)
-            {
+    private fun checkNavigationPath() {
+        if (pathPolylineOnMap != null) {
+            if (pathPolylineOnMap?.points?.size!! > 0) {
                 var pathPolylineNextPointLocation = Location("")
-                for(i in 0..pathPolyLine?.points?.size!!){
-                    pathPolylineNextPointLocation.latitude=pathPolylineOnMap?.points?.get(i)!!.latitude
-                    pathPolylineNextPointLocation.longitude=pathPolylineOnMap?.points?.get(i)!!.longitude
-                    if(loc?.distanceTo(pathPolylineNextPointLocation)!! < 15f)
-                    {
+                for (i in 0..pathPolyLine?.points?.size!!) {
+                    pathPolylineNextPointLocation.latitude =
+                        pathPolylineOnMap?.points?.get(i)!!.latitude
+                    pathPolylineNextPointLocation.longitude =
+                        pathPolylineOnMap?.points?.get(i)!!.longitude
+                    if (loc?.distanceTo(pathPolylineNextPointLocation)!! < 15f) {
                         pathPolyLine!!.points.removeAt(i)
                     }
                 }
@@ -272,18 +280,15 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
 
 
-    private fun drawPathPolyline(){
+    private fun drawPathPolyline() {
         pathPolylineOnMap?.remove()
         pathPolyLine?.color(Color.BLUE)
         pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
-        pathPolylineOnMap?.tag="path"
-        pathPolylineOnMap?.isClickable=true
-        pathPolylineOnMap?.pattern=pattern
+        pathPolylineOnMap?.tag = "path"
+        pathPolylineOnMap?.isClickable = true
+        pathPolylineOnMap?.pattern = pattern
         pathPolylineOnMap?.width = 20f
     }
-
-
-
 
 
     private fun startSpeedChecking() {
@@ -291,6 +296,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
             checkSpeed()
         }
     }
+
     private suspend fun checkSpeed() {
         withContext(Dispatchers.Default) {
             speed = if (loc?.hasSpeed() == true) {
@@ -330,6 +336,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
+        fusedLocationProviderClient?.flushLocations()
         startingPosition = null
         val locationResult = fusedLocationProviderClient?.lastLocation
         locationResult?.addOnCompleteListener(this) { task ->
@@ -349,8 +356,12 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                     updateMapUI()
                     gmap?.animateCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                        LatLng(loc!!.latitude,
-                            loc!!.longitude), 20f))
+                            LatLng(
+                                loc!!.latitude,
+                                loc!!.longitude
+                            ), 20f
+                        )
+                    )
                 }
             }
         }
@@ -365,7 +376,10 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
         marker = gmap?.addMarker(
             MarkerOptions().position(position!!).icon(
                 BitmapDescriptorFactory.defaultMarker(
-                    BitmapDescriptorFactory.HUE_AZURE)))
+                    BitmapDescriptorFactory.HUE_AZURE
+                )
+            )
+        )
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
 
 
@@ -377,12 +391,12 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
-        fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
+        fusedLocationProviderClient?.requestLocationUpdates(
+            locationRequest,
             locationCallback,
-            null)
+            null
+        )
     }
-
-
 
 
     fun request(url: String) {
@@ -406,9 +420,9 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
                 }
                 pathPolylineOnMap?.remove()
                 pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
-                pathPolylineOnMap?.tag="path"
-                pathPolylineOnMap?.isClickable=true
-                pathPolylineOnMap?.pattern=pattern
+                pathPolylineOnMap?.tag = "path"
+                pathPolylineOnMap?.isClickable = true
+                pathPolylineOnMap?.pattern = pattern
                 pathPolylineOnMap?.width = 20f
                 updateMapUI()
 
@@ -426,7 +440,7 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     override fun onCameraIdle() {
 
     }
-    
+
 
     override fun onMapLoaded() {
         getDeviceLocation()
@@ -440,13 +454,12 @@ class Exploring : AppCompatActivity(), GoogleMap.OnMapClickListener,
     }
 
     override fun onPolylineClick(p0: Polyline?) {
-        if(p0?.tag=="path"){
+        if (p0?.tag == "path") {
             pathPolylineOnMap?.remove()
             marker?.remove()
-            pathPolylineOnMap=null
+            pathPolylineOnMap = null
         }
     }
-
 
 
 }

@@ -47,7 +47,9 @@ import java.util.*
 import kotlin.math.round
 
 
-class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback,GoogleMap.OnPolylineClickListener {
+class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
+    GoogleMap.OnMapLongClickListener, GoogleMap.OnCameraIdleListener, GoogleMap.OnMapLoadedCallback,
+    GoogleMap.OnPolylineClickListener {
 
     private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
@@ -88,7 +90,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
     private var accManager: AccelerometerListener = AccelerometerListener()
 
     private var locationManager: LocationManager? = null
-    private var locationObtained: Boolean = false
 
     private var stillScanning: Boolean = true
 
@@ -117,12 +118,13 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     private lateinit var pathPoints: JSONArray
     private var startingPosition: LatLng? = null
-    private var im: Marker? = null
+    private var initialMarker: Marker? = null
     private var cp: Marker? = null
     private var trajectoryPolyLine: Polyline? = null
     private lateinit var gyroData: Array<Double>
     private lateinit var accData: Array<Double>
     private var deviceCameraManager: DeviceCameraManager? = null
+    private val pattern = listOf(Dot(), Gap(20F), Dash(30F), Gap(20F))
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -229,72 +231,88 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         initUI()
     }
 
-
+    //request location updates and update the ui with new location aswell as register accelerometer and gyroscope data
     private fun updateLocation() {
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.smallestDisplacement= MAX_DISTANCE_BETWEEN_POINTS
+        locationRequest?.smallestDisplacement = MAX_DISTANCE_BETWEEN_POINTS
         locationRequest?.interval = 1000
         locationRequest?.fastestInterval = 500
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult?) {
                 locationResult ?: return
                 loc = locationResult.lastLocation
+                if (loc?.hasAccuracy() == true) {
+                    if (loc?.accuracy!! < GPS_ACCURACY) {
 
-                    if(loc?.hasAccuracy() == true){
-                        if(loc?.accuracy!!< GPS_ACCURACY){
 
-
-                            setCurrentPositionMarker()
-                            longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
-                            altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
-                            latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
-
+                        setCurrentPositionMarker()
+                        longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
+                        altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
+                        latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
 
 
 
-                            gyroData = gManager.getData()
-                            accData = accManager.getData()
-                            gotData()
+
+                        gyroData = gManager.getData()
+                        accData = accManager.getData()
+                        gotData()
 
 
-                            polyline?.add(LatLng(latitude!!, longitude!!))
+                        polyline?.add(LatLng(latitude!!, longitude!!))
 
-                            //move camera to current position
-                            gmap?.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(LatLng(latitude!!,
-                                    longitude!!), 20f))
-                            setCurrentPositionMarker()
-                            setPolyLineOnMap()
+                        //move camera to current position
+                        gmap?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    latitude!!,
+                                    longitude!!
+                                ), 20f
+                            )
+                        )
+                        setCurrentPositionMarker()
+                        setPolyLineOnMap()
 
 
-                        }
                     }
+                }
             }
         }
     }
 
-    private fun checkNavigationPath(){
+    //function to update the auto generated path when user is close to one of its points by removing it and redrawing the polyline
+    private fun checkNavigationPath() {
 
-        if(pathPolyLine!=null){
-            if(pathPolyLine?.points?.size!! >0)
-            {
+        if (pathPolyLine != null) {
+            if (pathPolyLine?.points?.size!! > 0) {
                 var pathPolylineNextPointLocation = Location("")
                 var newLine = PolylineOptions()
-                for(i in 0 until pathPolyLine?.points?.size!!) {
-                    newLine.add(LatLng(pathPolyLine?.points?.get(i)?.latitude!!,pathPolyLine?.points?.get(i)?.longitude!!))
+                for (i in 0 until pathPolyLine?.points?.size!!) {
+                    newLine.add(
+                        LatLng(
+                            pathPolyLine?.points?.get(i)?.latitude!!,
+                            pathPolyLine?.points?.get(i)?.longitude!!
+                        )
+                    )
                 }
 
-                for(i in 0 until pathPolyLine?.points?.size!!){
-                    if(newLine.points.size>0){
-                        if(newLine?.points.indexOf(pathPolyLine?.points?.get(i))!=-1){
-                            val pos = newLine?.points[newLine?.points.indexOf(pathPolyLine?.points?.get(i))]
+                for (i in 0 until pathPolyLine?.points?.size!!) {
+                    if (newLine.points.size > 0) {
+                        if (newLine?.points.indexOf(pathPolyLine?.points?.get(i)) != -1) {
+                            val pos =
+                                newLine?.points[newLine?.points.indexOf(pathPolyLine?.points?.get(i))]
 
                             pathPolylineNextPointLocation.latitude = pos.latitude
                             pathPolylineNextPointLocation.longitude = pos.longitude
 
-                            if(loc?.distanceTo(pathPolylineNextPointLocation)!! > MIN_DISTANCE_TO_REMOVE_PT){
-                                newLine?.points.removeAt(newLine?.points.indexOf(pathPolyLine?.points?.get(i)))
+                            if (loc?.distanceTo(pathPolylineNextPointLocation)!! > MIN_DISTANCE_TO_REMOVE_PT) {
+                                newLine?.points.removeAt(
+                                    newLine?.points.indexOf(
+                                        pathPolyLine?.points?.get(
+                                            i
+                                        )
+                                    )
+                                )
                             }
                         }
                     }
@@ -306,8 +324,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         }
     }
 
-
-
+    //make the recording button invisible on startup
     private fun initUI() {
 
         startStopRecording.isVisible = false
@@ -315,7 +332,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         startStopRecording.isClickable = false
     }
 
-
+    //creates folders inside the app's folder , with its name being the current date
     private fun createFolders() {
         appFolderPath = this.getExternalFilesDir(null)?.absolutePath
         val simpleDateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm:ss")
@@ -331,7 +348,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     }
 
-
+    //writes the data acquired by the sensors to a json file
     private suspend fun saveFile() {
         val file = File(filesFolder!!.absolutePath + "/data.json")
         withContext(Dispatchers.IO) {
@@ -353,7 +370,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
         }
     }
-
 
 
     override fun onStart() {
@@ -401,21 +417,29 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         mapView?.onSaveInstanceState(outState)
     }
 
-
-
+    //saves the time elapsed, folder name , travel distance ,time when started and a snapshot of the map in the database
     private fun saveToDatabase(fName: String) {
         gmap?.snapshot {
             val totalElapsedTime = SystemClock.elapsedRealtime() - chrono?.base!!
-            dbManager.saveRoadStatus(RoadStatus("Scan", it, timerStarted!!, totalElapsedTime, getTravelDistance(), fName), this)
+            dbManager.saveRoadStatus(
+                RoadStatus(
+                    "Scan",
+                    it,
+                    timerStarted!!,
+                    totalElapsedTime,
+                    getTravelDistance(),
+                    fName
+                ), this
+            )
 
         }
 
     }
-
+    //calculates total distance traveled
     private fun getTravelDistance(): Float {
         return Utilities.calculateTotalDistance(polyline!!)
     }
-
+    //function that starts a thread to add data to array of data
     private fun gotData() {
         GlobalScope.launch {
             addData()
@@ -423,68 +447,74 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     }
 
-
-
+    //updates the speed with the current speed and updates the textview made for it
     @SuppressLint("SetTextI18n")
     private fun updateUI() {
         GlobalScope.launch(Dispatchers.Main) {
-            while(true){
-                speed = if (loc!!.hasSpeed()) round(loc!!.speed*3.6).toFloat() else 0f
+            while (true) {
+                speed = if (loc!!.hasSpeed()) round(loc!!.speed * 3.6).toFloat() else 0f
                 speedText?.text = "$speed KM/H"
-                delay(1000)
+                delay(500)
             }
         }
     }
-
+    //adds data from sensors to the array of data
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
-            var array = mapOf("speed" to speed, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+            var array = mapOf(
+                "speed" to speed,
+                "Gyro-x" to gyroData[0],
+                "Gyro-y" to gyroData[1],
+                "Gyro-z" to gyroData[2],
+                "Acc-x" to accData[0],
+                "Acc-y" to accData[1],
+                "Acc-z" to accData[2],
+                "Longitude" to longitude,
+                "Latitude" to latitude,
+                "Altitude" to altitude
+            )
             map[index] = array as Map<String, String>
             index++
         }
     }
 
-
+    //updates marker of current location on map
     private fun setCurrentPositionMarker() {
         cp?.remove()
         cp = gmap?.addMarker(
-                MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
+            MarkerOptions().position(LatLng(latitude!!, longitude!!)).title("Current Position")
         )
     }
 
-    private fun updateMapUI() {
-        if (im == null) {
-            im = gmap?.addMarker(
-                    startingPosition?.let {
-                        MarkerOptions().position(it)
-                                .title("Initial Position")
-                    }
+
+    private fun setInitialPositionMarker() {
+        if (initialMarker == null) {
+            initialMarker = gmap?.addMarker(
+                startingPosition?.let {
+                    MarkerOptions().position(it)
+                        .title("Initial Position")
+                }
             )
         }
-        gmap?.addPolyline(polyline)
     }
 
-
+    //updates the map with the path that the user took by drawing a polyline
     private fun setPolyLineOnMap() {
         trajectoryPolyLine?.remove()
         trajectoryPolyLine = gmap?.addPolyline(polyline)
 
     }
 
-
-
+    //function to get the devices' current location only once
     @SuppressLint("MissingPermission")
     private fun getDeviceLocation() {
+        fusedLocationProviderClient?.flushLocations()
         startingPosition = null
         val locationResult = fusedLocationProviderClient?.lastLocation
         locationResult?.addOnCompleteListener(this) { task ->
             if (task.isSuccessful) {
-
-                // Set the map's camera position to the current location of the device.
-                lastKnownLocation = task.result
-                if (lastKnownLocation != null) {
-                    locationObtained = true
-                    loc = lastKnownLocation
+                if (task.result != null) {
+                    loc = task.result
 
                     longitude = if (loc?.longitude == null) 0.0 else loc?.longitude
                     altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
@@ -492,89 +522,94 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
                     startingPosition = LatLng(latitude!!, longitude!!)
 
                     timerStarted = System.currentTimeMillis()
-                    chrono?.base=SystemClock.elapsedRealtime()
+                    chrono?.base = SystemClock.elapsedRealtime()
                     chrono?.start()
                     updateUI()
-                    speed=0f
-                    updateMapUI()
+                    speed = 0f
+                    setInitialPositionMarker()
                     polyline?.add(startingPosition)
-                    gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(
-                            LatLng(loc!!.latitude,
-                                    loc!!.longitude), 20f))
+
+                    // Set the map's camera position to the current location of the device.
+                    gmap?.animateCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(
+                                loc!!.latitude,
+                                loc!!.longitude
+                            ), 20f
+                        )
+                    )
 
                 }
             }
         }
     }
-    //define the listener
+
 
     override fun onMapClick(p0: LatLng?) {
     }
+
+    //when long clicked on the map , marks the touch position and adds a marker to it , sends a http request to a server which responds with a path to that location from current location
     override fun onMapLongClick(position: LatLng?) {
 
         url = "https://api.tomtom.com/routing/1/calculateRoute/"
         marker?.remove()
-        marker = gmap?.addMarker(MarkerOptions().position(position!!).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+        marker = gmap?.addMarker(
+            MarkerOptions().position(position!!)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+        )
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
         // var response = URL(url).readText()
         request(url!!)
-        updateMapUI()
         checkNavigationPath()
 
     }
-
+    //function that tells the device to make location updates
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
-
-
-        fusedLocationProviderClient?.requestLocationUpdates(locationRequest,
-                locationCallback,
-                null)
+        fusedLocationProviderClient?.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            null
+        )
     }
 
-
-
-    private fun drawPathPolyline(){
+    //draws a polyline which leads to a point marker on the map with a long click
+    private fun drawPathPolyline() {
         pathPolylineOnMap?.remove()
         pathPolyLine?.color(Color.BLUE)
         pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
-        pathPolylineOnMap?.tag="path"
-        pathPolylineOnMap?.isClickable=true
-        pathPolylineOnMap?.pattern=pattern
+        pathPolylineOnMap?.tag = "path"
+        pathPolylineOnMap?.isClickable = true
+        pathPolylineOnMap?.pattern = pattern
         pathPolylineOnMap?.width = 20f
     }
 
 
 
-    private val pattern = listOf(Dot(),Gap(20F),Dash(30F),Gap(20F))
-
+    //makes a http request and gets a response with a json string containing path points
     private fun request(url: String) {
         val queue = Volley.newRequestQueue(this)
         // Request a string response from the provided URL.
         val stringRequest = StringRequest(Request.Method.GET, url,
-                { response ->
-                    var jsonObject = JSONObject(response)
-                    val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
-                    pathPolyLine = PolylineOptions()
-                    pathPoints = jsonArray.getJSONObject(0)
-                            .getJSONArray("legs")
-                            .getJSONObject(0)
-                            .getJSONArray("points")
-                    for (i in 0 until pathPoints.length()) {
-                        var lat = pathPoints.getJSONObject(i).get("latitude") as Double
-                        var lon = pathPoints.getJSONObject(i).get("longitude") as Double
+            { response ->
+                var jsonObject = JSONObject(response)
+                val jsonArray: JSONArray = jsonObject.getJSONArray("routes")
+                pathPolyLine = PolylineOptions()
+                pathPoints = jsonArray.getJSONObject(0)
+                    .getJSONArray("legs")
+                    .getJSONObject(0)
+                    .getJSONArray("points")
+                for (i in 0 until pathPoints.length()) {
+                    var lat = pathPoints.getJSONObject(i).get("latitude") as Double
+                    var lon = pathPoints.getJSONObject(i).get("longitude") as Double
 
-                        pathPolyLine?.add(LatLng(lat, lon))
-                    }
-                   // pathPolylineOnMap?.remove()
-                  //  pathPolylineOnMap = gmap?.addPolyline(pathPolyLine)
-                    drawPathPolyline()
-                    updateMapUI()
+                    pathPolyLine?.add(LatLng(lat, lon))
+                }
+                drawPathPolyline()
+            },
+            {
 
-                },
-                {
-
-                })
+            })
 
         // Add the request to the RequestQueue.
 
@@ -601,12 +636,12 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
         mapView.onDestroy()
         super.onDestroy()
     }
-
+    //when the path polyline(blue dashed one) is clicked , remove it
     override fun onPolylineClick(p0: Polyline?) {
-        if(p0?.tag=="path"){
+        if (p0?.tag == "path") {
             pathPolylineOnMap?.remove()
             marker?.remove()
-            pathPolylineOnMap=null
+            pathPolylineOnMap = null
         }
     }
 

@@ -26,12 +26,13 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         }
 
     }
-
+    //function that adds the arraylist's items, defined in the constructor, in the view
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.road_status_item,parent,false)
         return ViewHolder(v)
     }
 
+    //function that configures how the items are displayed
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
 
         holder.itemView.road_status_item_image.animation = AnimationUtils.loadAnimation(context,R.anim.fade_transition_animation)
@@ -40,7 +41,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         holder.itemView.setOnClickListener {
             itemClicked(arrayList[position].id)
         }
-
+        //when long clicked on an item , shows a dialog that asks if u want to delete it
         holder.itemView.setOnLongClickListener {
             deleteItem(arrayList[position].id,arrayList[position].folder)
             true
@@ -48,6 +49,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
 
     }
 
+    //deletes an item from the list
     fun deleteItem(id:Int,folder:String){
 
 
@@ -89,7 +91,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         return arrayList.size
     }
 
-
+    //when an item is clicked , load another fragment and show its info
     fun itemClicked(id:Int){
         mainActivity.openRoadStatusItem(id)
     }
