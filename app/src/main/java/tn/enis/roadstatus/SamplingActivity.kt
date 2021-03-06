@@ -425,11 +425,12 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
 
 
+    @SuppressLint("SetTextI18n")
     private fun updateUI() {
         GlobalScope.launch(Dispatchers.Main) {
             while(true){
-                speed = if (loc!!.hasSpeed()) (loc!!.speed * 3.6).toFloat() else 0f
-                speedText?.text = (round(speed) * 3.6).toString() + " KM/H"
+                speed = if (loc!!.hasSpeed()) round(loc!!.speed*3.6).toFloat() else 0f
+                speedText?.text = "$speed KM/H"
                 delay(1000)
             }
         }
@@ -437,7 +438,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener, Go
 
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
-            var array = mapOf("speed" to round(speed * 3.6), "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
+            var array = mapOf("speed" to speed, "Gyro-x" to gyroData[0], "Gyro-y" to gyroData[1], "Gyro-z" to gyroData[2], "Acc-x" to accData[0], "Acc-y" to accData[1], "Acc-z" to accData[2], "Longitude" to longitude, "Latitude" to latitude, "Altitude" to altitude)
             map[index] = array as Map<String, String>
             index++
         }
