@@ -21,6 +21,7 @@ import tn.enis.roadstatus.fragments.ProfileFragment
 import tn.enis.roadstatus.fragments.RoadStatusItemFragment
 import tn.enis.roadstatus.fragments.SettingsFragment
 import tn.enis.roadstatus.other.Constants
+import tn.enis.roadstatus.other.Settings
 import tn.enis.roadstatus.other.Utilities
 import java.util.*
 
@@ -31,10 +32,14 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private var enteredFragment = false
     private var sureToClose = false
+    private val settings=Settings()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        //Load data
+        settings.context=this
+        settings.loadSettings()
         //fragments to each navigation tab
         val profileFragment = ProfileFragment()
         val settingsFragment = SettingsFragment()
@@ -61,28 +66,41 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                     }
                 }
                 R.id.start_scanning -> {
-                    val builder = AlertDialog.Builder(this)
+                    settings.loadSettings()
+                    when(settings.defaultMode){
+                        0->{
+                            val builder = AlertDialog.Builder(this)
 
 
-                    // Set the alert dialog title
-                    builder.setTitle("Sélectionner le mode d'utilisation : ")
-                        .setItems(
-                            arrayOf("Collecte de données", "Exploration")
-                        ) { _, which ->
-                            var intent: Intent?
-                            if (which == 0) {
-                                intent = Intent(this, SamplingActivity::class.java)
-                            } else {
-                                intent = Intent(this, Exploring::class.java)
-                            }
-                            startActivity(intent)
+                            // Set the alert dialog title
+                            builder.setTitle("Sélectionner le mode d'utilisation : ")
+                                .setItems(
+                                    arrayOf("Collecte de données", "Exploration")
+                                ) { _, which ->
+                                    var intent: Intent?
+                                    if (which == 0) {
+                                        intent = Intent(this, SamplingActivity::class.java)
+                                    } else {
+                                        intent = Intent(this, Exploring::class.java)
+                                    }
+                                    startActivity(intent)
+
+                                }
+                            // Finally, make the alert dialog using builder
+                            val dialog: AlertDialog = builder.create()
+
+                            // Display the alert dialog on app interface
+                            dialog.show()
+                        }
+                        1->{
+                            startActivity(Intent(this, SamplingActivity::class.java))
+                        }
+                        2->{
+                            startActivity(Intent(this, Exploring::class.java))
 
                         }
-                    // Finally, make the alert dialog using builder
-                    val dialog: AlertDialog = builder.create()
+                    }
 
-                    // Display the alert dialog on app interface
-                    dialog.show()
 
                 }
                 R.id.navigation_stats -> {

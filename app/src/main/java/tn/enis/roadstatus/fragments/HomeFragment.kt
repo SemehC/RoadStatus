@@ -12,6 +12,7 @@ import tn.enis.roadstatus.other.RoadStatusItem
 import tn.enis.roadstatus.RoadStatusItemAdapter
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
+import tn.enis.roadstatus.other.Settings
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -22,11 +23,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     lateinit var myAdapter: RoadStatusItemAdapter
 
     private var t:Toast?=null
-
     var mainActivity:MainActivity?=null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
 
         swiperefresh.setOnRefreshListener {
             refresh()
@@ -41,10 +42,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private fun prepareData():Boolean{
-        var newRoads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
-
-        var test=true
-        if(test){
             arrayList.clear()
             roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
             roads!!.forEach {
@@ -52,18 +49,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 val format = SimpleDateFormat("yyyy.MM.dd HH:mm")
                 arrayList.add(RoadStatusItem(it.id,it.label!!,format.format(date).toString(),it.img,it.file_name!!))
             }
-            return true
-        }
 
-        return false
+        return true
     }
 
-    private fun compareData(road1:RoadStatus, road2:RoadStatus):Boolean{
 
-        return (road1.date == road2.date && road1.file_name.equals(road2.file_name) && road1.id == road2.id && road1.label == road2.label)
-
-
-    }
 
     fun refresh(){
         val newData = prepareData()

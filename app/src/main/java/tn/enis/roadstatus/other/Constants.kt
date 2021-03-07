@@ -6,4 +6,5 @@ object Constants {
     const val MAX_DISTANCE_BETWEEN_POINTS = 5f
     const val GPS_ACCURACY = 14f
     const val MIN_DISTANCE_TO_REMOVE_PT=10f
+    const val SHARED_PREFS_NAME="road_status_shared_prefs"
 }

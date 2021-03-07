@@ -28,8 +28,8 @@
     <string name="nav_menu_home">Accueil</string>
     <string name="nav_menu_profile">Profil</string>
     <string name="nav_menu_start_scanning">commencer</string>
-    <string name="nav_menu_statistics">Statistics</string>
-    <string name="nav_menu_settings">Statistiques</string>
+    <string name="nav_menu_statistics">Statistiques</string>
+    <string name="nav_menu_settings">Parametres</string>
 
     <!-- Settings menu -->
     <string name="choose_language_label">Choisissez la langue</string>

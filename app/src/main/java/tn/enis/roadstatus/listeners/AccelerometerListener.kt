@@ -12,6 +12,7 @@ class AccelerometerListener : SensorEventListener {
     private var accz = 0.0
     override fun onSensorChanged(event: SensorEvent?) {
 
+        //Verify values
         if (event != null) {
             accx = ((event.values[0] * 180) / PI)
             accy = ((event.values[1] * 180) / PI)

@@ -12,7 +12,7 @@ import tn.enis.roadstatus.R
 
 
 class ProfileFragment : Fragment(R.layout.fragment_profile), AdapterView.OnItemSelectedListener {
-    val cars=arrayOf("car1", "car2", "car3")
+    private val cars=arrayOf("car1", "car2", "car3")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 

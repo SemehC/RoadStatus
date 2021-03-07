@@ -251,9 +251,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
                         altitude = if (loc?.altitude == null) 0.0 else loc?.altitude
                         latitude = if (loc?.latitude == null) 0.0 else loc?.latitude
 
-
-
-
                         gyroData = gManager.getData()
                         accData = accManager.getData()
                         gotData()

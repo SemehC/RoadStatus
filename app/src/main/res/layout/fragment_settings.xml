@@ -44,7 +44,7 @@
         <LinearLayout
             android:id="@+id/linearLayout3"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="60dp"
             android:layout_marginTop="12dp"
             android:gravity="center"
             android:orientation="horizontal"
@@ -61,20 +61,21 @@
                 android:textSize="24sp" />
 
             <com.google.android.material.chip.ChipGroup
+                android:id="@+id/units_chip_group"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip4"
+                    android:id="@+id/units_select_chip_1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checkable="true"
                     android:text="KM/H" />
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip5"
+                    android:id="@+id/units_select_chip_2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checkable="true"
@@ -88,7 +89,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="24dp"
+            android:gravity="center"
             android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/linearLayout3">
 
             <TextView
@@ -97,7 +101,42 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Default mode"
-                android:textSize="24sp" />
+                android:textSize="24sp"
+
+                />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/mode_select_chips_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+
+                    android:id="@+id/mode_select_chip_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="Let me choose"
+                    android:textAlignment="center" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/mode_select_chip_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="Scanning" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/mode_select_chip_3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checkable="true"
+                    android:text="Roaming" />
+
+
+            </com.google.android.material.chip.ChipGroup>
 
         </LinearLayout>
 
