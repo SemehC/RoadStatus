@@ -53,7 +53,6 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         }
 
     }
-
     // Record the video output taken by camera
     fun recordSession() {
         setupMediaRecorder(filesFolder)
