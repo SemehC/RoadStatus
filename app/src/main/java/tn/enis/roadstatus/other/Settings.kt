@@ -7,6 +7,7 @@ class Settings {
     var language:String="en"
     var defaultMode:Int=0
     var units:Int=0
+    var distanceBetweenPoints:Int=30
     var context:Context?=null
 
     fun saveSettings(){
@@ -15,6 +16,7 @@ class Settings {
             this?.putInt("units",units)
             this?.putString("language",language)
             this?.putInt("defaultMode",defaultMode)
+            this?.putInt("distanceBetweenPoints",distanceBetweenPoints)
             this?.commit()
         }
     }
@@ -25,6 +27,7 @@ class Settings {
             language = sharePrefs?.getString("language","en").toString()
             defaultMode = sharePrefs?.getInt("defaultMode",0)
             units = sharePrefs?.getInt("units",0)
+            distanceBetweenPoints = sharePrefs?.getInt("distanceBetweenPoints",30)
         }
     }
 

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.ChipGroup
@@ -18,7 +19,7 @@ import java.util.*
 import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities
 
 
-class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnItemSelectedListener {
+class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnItemSelectedListener,SeekBar.OnSeekBarChangeListener {
 
 
     private val languages=arrayOf("Choose language","English","French")
@@ -36,8 +37,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
 
         language_spinner.onItemSelectedListener = this
 
+        distanceSeekBar.progress=settings.distanceBetweenPoints
+        distanceTextView.text = distanceSeekBar.progress.toString()+" M"
+        
         val unitsGroup = view?.findViewById<ChipGroup>(R.id.units_chip_group)
         val modegroup = view?.findViewById<ChipGroup>(R.id.mode_select_chips_group)
+
+        distanceSeekBar.setOnSeekBarChangeListener(this)
 
         when(settings.units){
             0->{
@@ -122,6 +128,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {
+
+    }
+
+    override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+        distanceTextView.text = distanceSeekBar.progress.toString()+" M"
+        settings.distanceBetweenPoints = distanceSeekBar.progress
+        settings.saveSettings()
+    }
+
+    override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+    }
+
+    override fun onStopTrackingTouch(seekBar: SeekBar?) {
 
     }
 

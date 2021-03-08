@@ -36,6 +36,7 @@ import tn.enis.roadstatus.listeners.GyroscopeListener
 import tn.enis.roadstatus.other.Constants.GPS_ACCURACY
 import tn.enis.roadstatus.other.Constants.MAX_DISTANCE_BETWEEN_POINTS
 import tn.enis.roadstatus.other.Constants.MIN_DISTANCE_TO_REMOVE_PT
+import tn.enis.roadstatus.other.Settings
 import tn.enis.roadstatus.other.Utilities
 
 import java.io.BufferedWriter
@@ -126,10 +127,13 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var deviceCameraManager: DeviceCameraManager? = null
     private val pattern = listOf(Dot(), Gap(20F), Dash(30F), Gap(20F))
 
+
+    private val settings= Settings()
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
+        settings.loadSettings()
         createFolders()
         //Initializing Camera Manager
         deviceCameraManager = DeviceCameraManager(filesFolder!!, this, videoPreview)
@@ -235,7 +239,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private fun updateLocation() {
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.smallestDisplacement = MAX_DISTANCE_BETWEEN_POINTS
+        locationRequest?.smallestDisplacement = settings.distanceBetweenPoints.toFloat()
         locationRequest?.interval = 1000
         locationRequest?.fastestInterval = 500
         locationCallback = object : LocationCallback() {
