@@ -555,7 +555,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
         )
         url += "${loc?.latitude},${loc?.longitude}:${position?.latitude},${position?.longitude}/json?key=Vstg8Js5WPgqQJdWwXEyJF3XPzElvdCi"
-        // var response = URL(url).readText()
+
         request(url!!)
         checkNavigationPath()
 

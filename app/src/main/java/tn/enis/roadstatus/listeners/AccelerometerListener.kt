@@ -14,9 +14,9 @@ class AccelerometerListener : SensorEventListener {
 
         //Verify values
         if (event != null) {
-            accx = ((event.values[0] * 180) / PI)
-            accy = ((event.values[1] * 180) / PI)
-            accz = ((event.values[2] * 180) / PI)
+            accx = event.values[0].toDouble()
+            accy = event.values[1].toDouble()
+            accz = event.values[2].toDouble()
         }
 
     }
