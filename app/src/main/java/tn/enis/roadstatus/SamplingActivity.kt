@@ -67,7 +67,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var loc: Location? = null
     private var speed: Float = 0f
     private var index: Int = 0
-    private var endFile: String = ""
+    private var endFile: String = "id,speed,accx,accy,accz,gyrx,gyry,gyrz,lat,lng\n"
     private var map = mutableMapOf<Int, Map<String, String>>()
 
     private var gmap: GoogleMap? = null
@@ -347,13 +347,11 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     //writes the data acquired by the sensors to a json file
     private suspend fun saveFile() {
-        val file = File(filesFolder!!.absolutePath + "/data.json")
+        val file = File(filesFolder!!.absolutePath + "/data.csv")
         withContext(Dispatchers.IO) {
             while (!file.exists()) {
 
                 try {
-                    val gson = Gson()
-                    endFile += gson.toJson(map)
                     val fw = FileWriter(file.absoluteFile)
                     val bw = BufferedWriter(fw)
                     bw.write(endFile)
@@ -432,10 +430,12 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         }
 
     }
+
     //calculates total distance traveled
     private fun getTravelDistance(): Float {
         return Utilities.calculateTotalDistance(polyline!!)
     }
+
     //function that starts a thread to add data to array of data
     private fun gotData() {
         GlobalScope.launch {
@@ -455,22 +455,12 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
             }
         }
     }
+
     //adds data from sensors to the array of data
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
-            var array = mapOf(
-                "speed" to speed,
-                "Gyro-x" to gyroData[0],
-                "Gyro-y" to gyroData[1],
-                "Gyro-z" to gyroData[2],
-                "Acc-x" to accData[0],
-                "Acc-y" to accData[1],
-                "Acc-z" to accData[2],
-                "Longitude" to longitude,
-                "Latitude" to latitude,
-                "Altitude" to altitude
-            )
-            map[index] = array as Map<String, String>
+
+            endFile += "$index,$speed,${accData[0]},${accData[1]},${accData[2]},${gyroData[0]},${gyroData[1]},${gyroData[2]},$latitude,$longitude\n"
             index++
         }
     }
@@ -560,6 +550,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         checkNavigationPath()
 
     }
+
     //function that tells the device to make location updates
     @SuppressLint("MissingPermission")
     private fun startLocationUpdates() {
@@ -580,7 +571,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         pathPolylineOnMap?.pattern = pattern
         pathPolylineOnMap?.width = 20f
     }
-
 
 
     //makes a http request and gets a response with a json string containing path points
@@ -633,6 +623,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         mapView.onDestroy()
         super.onDestroy()
     }
+
     //when the path polyline(blue dashed one) is clicked , remove it
     override fun onPolylineClick(p0: Polyline?) {
         if (p0?.tag == "path") {

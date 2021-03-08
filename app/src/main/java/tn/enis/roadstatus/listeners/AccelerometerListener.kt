@@ -20,7 +20,6 @@ class AccelerometerListener : SensorEventListener {
         }
 
     }
-
     fun getData(): Array<Double> {
         return arrayOf(accx, accy, accz)
     }
