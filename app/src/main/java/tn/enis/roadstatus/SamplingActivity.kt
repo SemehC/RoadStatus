@@ -128,11 +128,13 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private val pattern = listOf(Dot(), Gap(20F), Dash(30F), Gap(20F))
 
 
-    private val settings= Settings()
+    private val settings = Settings()
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
+        settings.context = this
+
         settings.loadSettings()
         createFolders()
         //Initializing Camera Manager
@@ -240,6 +242,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         locationRequest?.smallestDisplacement = settings.distanceBetweenPoints.toFloat()
+        println("distance = ${settings.distanceBetweenPoints}")
         locationRequest?.interval = 1000
         locationRequest?.fastestInterval = 500
         locationCallback = object : LocationCallback() {

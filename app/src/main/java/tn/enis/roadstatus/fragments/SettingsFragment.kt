@@ -135,6 +135,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
         distanceTextView.text = distanceSeekBar.progress.toString()+" M"
         settings.distanceBetweenPoints = distanceSeekBar.progress
         settings.saveSettings()
+
     }
 
     override fun onStartTrackingTouch(seekBar: SeekBar?) {
