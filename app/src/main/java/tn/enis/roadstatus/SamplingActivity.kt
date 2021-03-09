@@ -4,6 +4,7 @@ import   android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.SurfaceTexture
 
 import android.hardware.Sensor
 import android.hardware.SensorManager
@@ -13,6 +14,7 @@ import android.location.LocationManager
 
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.TextureView
 import android.widget.*
 
 import androidx.appcompat.app.AppCompatActivity
@@ -55,14 +57,15 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     private var locationRequest: LocationRequest? = null
     private var locationCallback: LocationCallback? = null
-    private var lastKnownLocation: Location? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private var marker: Marker? = null
     private val dbManager by lazy {
         DatabaseHandler()
     }
+    private var surfaceViewListener: TextureView.SurfaceTextureListener? = null
     private var url: String? = null
     private var isRecording = false
+
     private var accSensor: Sensor? = null
     private var gyro: Sensor? = null
     private var sensorManager: SensorManager? = null
@@ -70,7 +73,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var speed: Float = 0f
     private var index: Int = 0
     private var endFile1: String = ""
-    private var endFile2: String = "Id,Speed,Accelerometer_x,Accelerometer_y,Accelerometer_z,Gyroscope_x,Gyroscope_y,Gyroscope_z,Label\n"
+    private var endFile2: String =
+        "Id,Speed,Accelerometer_x,Accelerometer_y,Accelerometer_z,Gyroscope_x,Gyroscope_y,Gyroscope_z,Label\n"
     private var map = mutableMapOf<Int, Map<String, String>>()
 
     private var gmap: GoogleMap? = null
@@ -100,7 +104,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private lateinit var folderName: String
     private var appFolder: File? = null
     private var filesFolder: File? = null
-    private var cameraIsOpened = false
 
     private val stopButton: Button by lazy {
         findViewById(R.id.stop_scan_bt)
@@ -111,14 +114,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private val mapStyleButton: RadioButton by lazy {
         findViewById(R.id.mapStyle)
     }
-    private val startStopRecording: ImageButton by lazy {
-        findViewById(R.id.recordVideoButton)
-    }
-    private val openCameraButton: ImageButton by lazy {
-        findViewById(R.id.cameraButton)
-    }
-
-
     private lateinit var pathPoints: JSONArray
     private var startingPosition: LatLng? = null
     private var initialMarker: Marker? = null
@@ -129,8 +124,19 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var deviceCameraManager: DeviceCameraManager? = null
     private val pattern = listOf(Dot(), Gap(20F), Dash(30F), Gap(20F))
 
+    private val surfaceListener = object : TextureView.SurfaceTextureListener {
+        override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
+            deviceCameraManager!!.connectCamera()
+        }
 
+        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
+        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture) = true
+
+        override fun onSurfaceTextureUpdated(p0: SurfaceTexture) = Unit
+
+    }
     private val settings = Settings()
+
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -147,7 +153,9 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         //Getting Text views
         speedText = findViewById(R.id.speed_text_view)
         chrono = findViewById(R.id.time_text_view)
-
+        deviceCameraManager!!.startBackgroundThread()
+        videoPreview.surfaceTextureListener = surfaceListener
+        //videoPreview.surfaceTextureListener = this
         //Getting Google Map
         mapView.onCreate(savedInstanceState)
         mapView.isClickable = true
@@ -182,10 +190,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         stopButton.setOnClickListener {
             saveToDatabase(folderName)
             GlobalScope.launch(Dispatchers.Default) {
-                if (isRecording) {
-                    deviceCameraManager!!.stopRecording()
-                    isRecording = false
-                }
+                deviceCameraManager!!.stopRecording()
                 saveFile()
             }
             stillScanning = false
@@ -193,58 +198,14 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
             finish()
         }
 
-        //Record or stop the recording
-        startStopRecording.setOnClickListener {
-            if (isRecording) {
-                deviceCameraManager!!.stopRecording()
-                deviceCameraManager!!.previewSession()
-                startStopRecording.setImageResource(android.R.drawable.presence_online)
-                Toast.makeText(this, "Stopped recording !", Toast.LENGTH_SHORT).show()
-            } else {
-                deviceCameraManager!!.recordSession()
-                startStopRecording.setImageResource(android.R.drawable.ic_notification_overlay)
-                Toast.makeText(this, "Started recording !", Toast.LENGTH_SHORT).show()
-            }
-            isRecording = !isRecording
-        }
-
-        //Open or close the camera
-        openCameraButton.setOnClickListener {
-            if (!isRecording) {
-                if (cameraIsOpened) {
-                    deviceCameraManager!!.closeCamera()
-                    videoPreview.isVisible = false
-                    startStopRecording.isEnabled = false
-                    startStopRecording.isClickable = false
-                    startStopRecording.isVisible = false
-
-                    openCameraButton.setImageResource(android.R.drawable.presence_video_online)
-                    Toast.makeText(this, "Camera closed !", Toast.LENGTH_SHORT).show()
-                } else {
-                    videoPreview.isVisible = true
-                    deviceCameraManager!!.connectCamera()
-                    startStopRecording.isEnabled = true
-                    startStopRecording.isClickable = true
-                    startStopRecording.isVisible = true
-
-                    openCameraButton.setImageResource(android.R.drawable.presence_video_busy)
-                    Toast.makeText(this, "Camera opened !", Toast.LENGTH_SHORT).show()
-                }
-                cameraIsOpened = !cameraIsOpened
-            } else {
-                Toast.makeText(this, "Please stop recording first !", Toast.LENGTH_SHORT).show()
-            }
-
-        }
-        initUI()
     }
 
     //request location updates and update the ui with new location aswell as register accelerometer and gyroscope data
     private fun updateLocation() {
         locationRequest = LocationRequest.create()
         locationRequest?.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest?.smallestDisplacement = settings.distanceBetweenPoints.toFloat()
-        println("distance = ${settings.distanceBetweenPoints}")
+        locationRequest?.smallestDisplacement = (settings.distanceBetweenPoints.toFloat() / 10)
+        println("distance = ${locationRequest?.smallestDisplacement}")
         locationRequest?.interval = 1000
         locationRequest?.fastestInterval = 500
         locationCallback = object : LocationCallback() {
@@ -330,13 +291,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
         }
     }
 
-    //make the recording button invisible on startup
-    private fun initUI() {
-
-        startStopRecording.isVisible = false
-        startStopRecording.isEnabled = false
-        startStopRecording.isClickable = false
-    }
 
     //creates folders inside the app's folder , with its name being the current date
     private fun createFolders() {
@@ -396,10 +350,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
         sensorManager!!.registerListener(accManager, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
         sensorManager!!.registerListener(gManager, gyro, SensorManager.SENSOR_DELAY_NORMAL)
-        deviceCameraManager!!.startBackgroundThread()
-        if (videoPreview.isAvailable)
-        else
-            videoPreview.surfaceTextureListener = deviceCameraManager!!.surfaceListener
+
+
         startLocationUpdates()
     }
 
@@ -645,6 +597,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     override fun onMapLoaded() {
         getDeviceLocation()
         startLocationUpdates()
+        deviceCameraManager!!.recordSession()
     }
 
     override fun onDestroy() {
@@ -661,8 +614,6 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
             pathPolylineOnMap = null
         }
     }
-
-
 }
 
 

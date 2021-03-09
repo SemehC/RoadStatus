@@ -167,17 +167,6 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         }
     }
 
-    val surfaceListener = object : TextureView.SurfaceTextureListener {
-        override fun onSurfaceTextureAvailable(p0: SurfaceTexture, p1: Int, p2: Int) {
-
-        }
-
-        override fun onSurfaceTextureSizeChanged(p0: SurfaceTexture, p1: Int, p2: Int) {}
-        override fun onSurfaceTextureDestroyed(p0: SurfaceTexture) = true
-
-        override fun onSurfaceTextureUpdated(p0: SurfaceTexture) = Unit
-
-    }
 
     //Select which camera to use
     fun cameraId(lens: Int): String {

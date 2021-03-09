@@ -38,7 +38,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
         language_spinner.onItemSelectedListener = this
 
         distanceSeekBar.progress=settings.distanceBetweenPoints
-        distanceTextView.text = distanceSeekBar.progress.toString()+" M"
+        distanceTextView.text = "${(distanceSeekBar.progress.toFloat()/10)} M"
         
         val unitsGroup = view?.findViewById<ChipGroup>(R.id.units_chip_group)
         val modegroup = view?.findViewById<ChipGroup>(R.id.mode_select_chips_group)
@@ -132,7 +132,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
     }
 
     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-        distanceTextView.text = distanceSeekBar.progress.toString()+" M"
+        distanceTextView.text = "${(distanceSeekBar.progress.toFloat()/10)} M"
         settings.distanceBetweenPoints = distanceSeekBar.progress
         settings.saveSettings()
 
