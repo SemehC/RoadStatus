@@ -174,7 +174,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:text="30 M"
+                    android:text="3 M"
                     android:textSize="19sp" />
 
                 <SeekBar
@@ -182,7 +182,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:max="60"
+                    android:max="100"
                     android:min="1"
                     android:progress="30" />
             </LinearLayout>

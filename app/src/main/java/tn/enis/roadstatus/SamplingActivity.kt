@@ -46,6 +46,7 @@ import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.round
+import kotlin.system.exitProcess
 
 
 class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
@@ -68,7 +69,8 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var loc: Location? = null
     private var speed: Float = 0f
     private var index: Int = 0
-    private var endFile: String = "id,speed,accx,accy,accz,gyrx,gyry,gyrz,lat,lng\n"
+    private var endFile1: String = ""
+    private var endFile2: String = "Id,Speed,Accelerometer_x,Accelerometer_y,Accelerometer_z,Gyroscope_x,Gyroscope_y,Gyroscope_z,Label\n"
     private var map = mutableMapOf<Int, Map<String, String>>()
 
     private var gmap: GoogleMap? = null
@@ -352,21 +354,29 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     }
 
-    //writes the data acquired by the sensors to a json file
+    //writes the data acquired by the sensors to a json file && csv file
     private suspend fun saveFile() {
-        val file = File(filesFolder!!.absolutePath + "/data.csv")
+        val file1 = File(filesFolder!!.absolutePath + "/data.json")
+        val file2 = File(filesFolder!!.absolutePath + "/data.csv")
         withContext(Dispatchers.IO) {
-            while (!file.exists()) {
+            while (!file1.exists() && !file2.exists()) {
 
                 try {
-                    val fw = FileWriter(file.absoluteFile)
-                    val bw = BufferedWriter(fw)
-                    bw.write(endFile)
-                    bw.flush()
-                    bw.close()
+                    val fw1 = FileWriter(file1.absoluteFile)
+                    val fw2 = FileWriter(file2.absoluteFile)
+                    val bw1 = BufferedWriter(fw1)
+                    val bw2 = BufferedWriter(fw2)
+                    val gson = Gson()
+                    endFile1 += gson.toJson(map)
+                    bw1.write(endFile1)
+                    bw2.write(endFile2)
+                    bw1.flush()
+                    bw2.flush()
+                    bw1.close()
+                    bw2.close()
                 } catch (e: IOException) {
                     e.printStackTrace()
-                    System.exit(-1)
+                    exitProcess(-1)
                 }
             }
 
@@ -466,8 +476,20 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     //adds data from sensors to the array of data
     private suspend fun addData() {
         withContext(Dispatchers.Default) {
-
-            endFile += "$index,$speed,${accData[0]},${accData[1]},${accData[2]},${gyroData[0]},${gyroData[1]},${gyroData[2]},$latitude,$longitude\n"
+            var array = mapOf(
+                "speed" to speed,
+                "Gyro-x" to gyroData[0],
+                "Gyro-y" to gyroData[1],
+                "Gyro-z" to gyroData[2],
+                "Acc-x" to accData[0],
+                "Acc-y" to accData[1],
+                "Acc-z" to accData[2],
+                "Longitude" to longitude,
+                "Latitude" to latitude,
+                "Altitude" to altitude
+            )
+            map[index] = array as Map<String, String>
+            endFile2 += "$index,$speed,${accData[0]},${accData[1]},${accData[2]},${gyroData[0]},${gyroData[1]},${gyroData[2]}\n"
             index++
         }
     }
