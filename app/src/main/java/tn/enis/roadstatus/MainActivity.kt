@@ -32,13 +32,13 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
     private var enteredFragment = false
     private var sureToClose = false
-    private val settings=Settings()
+    private val settings = Settings()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         //Load data
-        settings.context=this
+        settings.context = this
         settings.loadSettings()
         //fragments to each navigation tab
         val profileFragment = ProfileFragment()
@@ -67,24 +67,58 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                 }
                 R.id.start_scanning -> {
                     settings.loadSettings()
-                    when(settings.defaultMode){
-                        0->{
+                    when (settings.defaultMode) {
+                        0 -> {
                             val builder = AlertDialog.Builder(this)
-
+                            var intent1: Intent?
 
                             // Set the alert dialog title
                             builder.setTitle("Sélectionner le mode d'utilisation : ")
                                 .setItems(
                                     arrayOf("Collecte de données", "Exploration")
                                 ) { _, which ->
-                                    var intent: Intent?
                                     if (which == 0) {
-                                        intent = Intent(this, SamplingActivity::class.java)
-                                    } else {
-                                        intent = Intent(this, Exploring::class.java)
-                                    }
-                                    startActivity(intent)
+                                        intent1 = Intent(this, SamplingActivity::class.java)
+                                        val builder2 = AlertDialog.Builder(this)
 
+                                        val types = arrayOf(
+                                            "Earthen",
+                                            "Gravel",
+                                            "Kankar",
+                                            "WBM",
+                                            "Bituminous(normal)",
+                                            "Concrete(highway)"
+                                        )
+                                        builder2.setTitle("Select road type : ").setItems(types)
+                                        { _, which1 ->
+                                            intent1!!.putExtra("road type", types[which1])
+                                            val builder3 = AlertDialog.Builder(this)
+                                            val quality = arrayOf("Good", "Average", "Bad")
+                                            builder3.setTitle("Select road quality")
+                                                .setItems(quality) { _, which2 ->
+                                                    intent1!!.putExtra(
+                                                        "road quality",
+                                                        quality[which2]
+                                                    )
+                                                    startActivity(intent1)
+                                                }
+                                            // Finally, make the alert dialog using builder
+                                            val dialog3: AlertDialog = builder3.create()
+
+                                            // Display the alert dialog on app interface
+                                            dialog3.show()
+                                        }
+                                        // Finally, make the alert dialog using builder
+                                        val dialog2: AlertDialog = builder2.create()
+
+                                        // Display the alert dialog on app interface
+                                        dialog2.show()
+
+
+                                    } else {
+                                        intent1 = Intent(this, Exploring::class.java)
+                                        startActivity(intent1)
+                                    }
                                 }
                             // Finally, make the alert dialog using builder
                             val dialog: AlertDialog = builder.create()
@@ -92,10 +126,10 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             // Display the alert dialog on app interface
                             dialog.show()
                         }
-                        1->{
+                        1 -> {
                             startActivity(Intent(this, SamplingActivity::class.java))
                         }
-                        2->{
+                        2 -> {
                             startActivity(Intent(this, Exploring::class.java))
 
                         }

@@ -74,7 +74,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
     private var index: Int = 0
     private var endFile1: String = ""
     private var endFile2: String =
-        "Id,Speed,Accelerometer_x,Accelerometer_y,Accelerometer_z,Gyroscope_x,Gyroscope_y,Gyroscope_z,Label\n"
+        "Id,Speed,Accelerometer_x,Accelerometer_y,Accelerometer_z,Gyroscope_x,Gyroscope_y,Gyroscope_z,RoadType,RoadQuality\n"
     private var map = mutableMapOf<Int, Map<String, String>>()
 
     private var gmap: GoogleMap? = null
@@ -136,13 +136,18 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
 
     }
     private val settings = Settings()
+    private var roadType:String?=null
+    private var roadQuality:String?=null
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scanning)
         settings.context = this
-
+        roadType=intent.getStringExtra("road type")
+        roadQuality=intent.getStringExtra("road quality")
+        println("road quality : $roadQuality")
+        println("road type : $roadType")
         settings.loadSettings()
         createFolders()
         //Initializing Camera Manager
@@ -441,7 +446,7 @@ class SamplingActivity() : AppCompatActivity(), GoogleMap.OnMapClickListener,
                 "Altitude" to altitude
             )
             map[index] = array as Map<String, String>
-            endFile2 += "$index,$speed,${accData[0]},${accData[1]},${accData[2]},${gyroData[0]},${gyroData[1]},${gyroData[2]}\n"
+            endFile2 += "$index,$speed,${accData[0]},${accData[1]},${accData[2]},${gyroData[0]},${gyroData[1]},${gyroData[2]},$roadType,$roadQuality\n"
             index++
         }
     }
