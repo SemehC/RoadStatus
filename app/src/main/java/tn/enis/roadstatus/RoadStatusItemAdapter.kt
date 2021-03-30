@@ -14,7 +14,7 @@ import tn.enis.roadstatus.fragments.HomeFragment
 import tn.enis.roadstatus.other.RoadStatusItem
 import java.io.File
 
-class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context: Context, val mainActivity: MainActivity,val homeFragment: HomeFragment):
+class RoadStatusItemAdapter(private val arrayList:ArrayList<RoadStatusItem>, val context: Context, private val mainActivity: MainActivity, private val homeFragment: HomeFragment):
     RecyclerView.Adapter<RoadStatusItemAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View):RecyclerView.ViewHolder(itemView){
@@ -50,7 +50,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
     //deletes an item from the list
-    fun deleteItem(id:Int,folder:String){
+    private fun deleteItem(id:Int,folder:String){
 
 
         val builder = AlertDialog.Builder(context)
@@ -62,20 +62,19 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
         builder.setMessage("Are you sure you want to delete this ?")
 
         // Set a positive button and its click listener on alert dialog
-        builder.setPositiveButton("YES"){dialog, which ->
+        builder.setPositiveButton("YES"){ _, _ ->
             DatabaseHandler().removeItemById(context,id)
             homeFragment.refresh()
             val dir =  context.getExternalFilesDir(null)?.absolutePath
-            val folderName = folder
             val appFolder = File(dir, "PFA")
-            val filesFolder = File(appFolder!!.absolutePath, folderName)
+            val filesFolder = File(appFolder.absolutePath, folder)
             filesFolder.deleteRecursively()
             filesFolder.delete()
         }
 
 
         // Display a negative button on alert dialog
-        builder.setNegativeButton("No"){dialog,which ->
+        builder.setNegativeButton("No"){ _, _ ->
             Toast.makeText(context,"Canceled.",Toast.LENGTH_SHORT).show()
         }
 
@@ -92,7 +91,7 @@ class RoadStatusItemAdapter(val arrayList:ArrayList<RoadStatusItem>, val context
     }
 
     //when an item is clicked , load another fragment and show its info
-    fun itemClicked(id:Int){
+    private fun itemClicked(id:Int){
         mainActivity.openRoadStatusItem(id)
     }
 

@@ -24,10 +24,10 @@ class Settings {
     fun loadSettings(){
         val sharePrefs = context?.getSharedPreferences(SHARED_PREFS_NAME,Context.MODE_PRIVATE)
         if(sharePrefs!=null){
-            language = sharePrefs?.getString("language","en").toString()
-            defaultMode = sharePrefs?.getInt("defaultMode",0)
-            units = sharePrefs?.getInt("units",0)
-            distanceBetweenPoints = sharePrefs?.getInt("distanceBetweenPoints",30)
+            language = sharePrefs.getString("language","en").toString()
+            defaultMode = sharePrefs.getInt("defaultMode",0)
+            units = sharePrefs.getInt("units",0)
+            distanceBetweenPoints = sharePrefs.getInt("distanceBetweenPoints",30)
         }
     }
 

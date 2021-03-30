@@ -29,7 +29,7 @@ object Utilities {
 
 
     fun calculateTotalDistance(polyline: PolylineOptions):Float{
-        var r:FloatArray= FloatArray(1)
+        val r:FloatArray= FloatArray(1)
         var res:Float=0f
         for(i in 0 until polyline?.points?.size!!-1){
             val pos1 = LatLng(polyline?.points?.get(i)?.latitude!!,polyline?.points?.get(i)?.longitude!!)

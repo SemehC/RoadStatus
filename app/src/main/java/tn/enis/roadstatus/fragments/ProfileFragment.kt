@@ -1,6 +1,5 @@
 package tn.enis.roadstatus.fragments
 
-import android.R.attr.country
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -18,9 +17,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile), AdapterView.OnItemS
 
 
 
-        val spin=view?.findViewById<Spinner>(R.id.cars_spinner)
+        val spin=view.findViewById<Spinner>(R.id.cars_spinner)
 
-        val aa=ArrayAdapter(view?.context,android.R.layout.simple_spinner_item,cars)
+        val aa=ArrayAdapter(view.context,android.R.layout.simple_spinner_item,cars)
 
         aa.setDropDownViewResource(android.R.layout.simple_spinner_item)
 

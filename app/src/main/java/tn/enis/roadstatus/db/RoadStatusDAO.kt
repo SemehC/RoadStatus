@@ -1,6 +1,5 @@
 package tn.enis.roadstatus.db
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao

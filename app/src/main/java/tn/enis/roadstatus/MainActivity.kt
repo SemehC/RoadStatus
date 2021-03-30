@@ -1,14 +1,12 @@
 package tn.enis.roadstatus
 
 import android.Manifest
-import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.DialogFragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -23,7 +21,6 @@ import tn.enis.roadstatus.fragments.SettingsFragment
 import tn.enis.roadstatus.other.Constants
 import tn.enis.roadstatus.other.Settings
 import tn.enis.roadstatus.other.Utilities
-import java.util.*
 
 
 class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
@@ -79,42 +76,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                                 ) { _, which ->
                                     if (which == 0) {
                                         intent1 = Intent(this, SamplingActivity::class.java)
-                                        val builder2 = AlertDialog.Builder(this)
-
-                                        val types = arrayOf(
-                                            "Earthen",
-                                            "Gravel",
-                                            "Kankar",
-                                            "WBM",
-                                            "Bituminous(normal)",
-                                            "Concrete(highway)"
-                                        )
-                                        builder2.setTitle("Select road type : ").setItems(types)
-                                        { _, which1 ->
-                                            intent1!!.putExtra("road type", types[which1])
-                                            val builder3 = AlertDialog.Builder(this)
-                                            val quality = arrayOf("Good", "Average", "Bad")
-                                            builder3.setTitle("Select road quality")
-                                                .setItems(quality) { _, which2 ->
-                                                    intent1!!.putExtra(
-                                                        "road quality",
-                                                        quality[which2]
-                                                    )
-                                                    startActivity(intent1)
-                                                }
-                                            // Finally, make the alert dialog using builder
-                                            val dialog3: AlertDialog = builder3.create()
-
-                                            // Display the alert dialog on app interface
-                                            dialog3.show()
-                                        }
-                                        // Finally, make the alert dialog using builder
-                                        val dialog2: AlertDialog = builder2.create()
-
-                                        // Display the alert dialog on app interface
-                                        dialog2.show()
-
-
+                                        chooseTypes(intent1!!)
                                     } else {
                                         intent1 = Intent(this, Exploring::class.java)
                                         startActivity(intent1)
@@ -127,7 +89,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                             dialog.show()
                         }
                         1 -> {
-                            startActivity(Intent(this, SamplingActivity::class.java))
+                            intent = Intent(this, SamplingActivity::class.java)
+                            chooseTypes(intent)
                         }
                         2 -> {
                             startActivity(Intent(this, Exploring::class.java))
@@ -161,7 +124,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     }
 
 
-    fun returnHome() {
+    private fun returnHome() {
         supportFragmentManager.beginTransaction().apply {
             replace(R.id.fragmentContainer, homeFragment).commit()
         }
@@ -222,7 +185,43 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
 
     }
+    private fun chooseTypes(intent:Intent)
+    {
+        val builder2 = AlertDialog.Builder(this)
 
+        val types = arrayOf(
+            "Earthen",
+            "Gravel",
+            "Kankar",
+            "WBM",
+            "Bituminous(normal)",
+            "Concrete(highway)"
+        )
+        builder2.setTitle("Select road type : ").setItems(types)
+        { _, which1 ->
+            intent.putExtra("road type", types[which1])
+            val builder3 = AlertDialog.Builder(this)
+            val quality = arrayOf("Good", "Average", "Bad")
+            builder3.setTitle("Select road quality")
+                .setItems(quality) { _, which2 ->
+                    intent.putExtra(
+                        "road quality",
+                        quality[which2]
+                    )
+                    startActivity(intent)
+                }
+            // Finally, make the alert dialog using builder
+            val dialog3: AlertDialog = builder3.create()
+
+            // Display the alert dialog on app interface
+            dialog3.show()
+        }
+        // Finally, make the alert dialog using builder
+        val dialog2: AlertDialog = builder2.create()
+
+        // Display the alert dialog on app interface
+        dialog2.show()
+    }
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
 
     }

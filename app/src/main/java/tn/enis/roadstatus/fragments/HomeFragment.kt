@@ -1,5 +1,6 @@
 package tn.enis.roadstatus.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.View
@@ -12,7 +13,6 @@ import tn.enis.roadstatus.other.RoadStatusItem
 import tn.enis.roadstatus.RoadStatusItemAdapter
 import tn.enis.roadstatus.db.DatabaseHandler
 import tn.enis.roadstatus.db.RoadStatus
-import tn.enis.roadstatus.other.Settings
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -35,19 +35,21 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         }
 
         refresh()
-        myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!,mainActivity!!,this)
-        recyclerView.layoutManager = LinearLayoutManager(view?.context)
+        myAdapter = RoadStatusItemAdapter(arrayList,view.context!!,mainActivity!!,this)
+        recyclerView.layoutManager = LinearLayoutManager(view.context)
         recyclerView.adapter = myAdapter
 
     }
 
+    @SuppressLint("SimpleDateFormat")
     private fun prepareData():Boolean{
             arrayList.clear()
             roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
-            roads!!.forEach {
+            roads.forEach {
                 val date = Date(it.date)
                 val format = SimpleDateFormat("yyyy.MM.dd HH:mm")
-                arrayList.add(RoadStatusItem(it.id,it.label!!,format.format(date).toString(),it.img,it.file_name!!))
+                arrayList.add(RoadStatusItem(it.id,
+                    it.label,format.format(date).toString(),it.img,it.file_name!!))
             }
 
         return true

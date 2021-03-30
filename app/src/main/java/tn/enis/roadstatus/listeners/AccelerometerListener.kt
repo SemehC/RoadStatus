@@ -3,8 +3,6 @@ package tn.enis.roadstatus.listeners
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
-import android.util.Log
-import kotlin.math.PI
 
 class AccelerometerListener : SensorEventListener {
     private var accx = 0.0

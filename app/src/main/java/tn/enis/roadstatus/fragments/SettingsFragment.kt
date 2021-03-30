@@ -1,6 +1,6 @@
 package tn.enis.roadstatus.fragments
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -11,12 +11,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.android.material.chip.ChipGroup
 import kotlinx.android.synthetic.main.fragment_settings.*
-import tn.enis.roadstatus.BaseApplication
 import tn.enis.roadstatus.MainActivity
 import tn.enis.roadstatus.R
 import tn.enis.roadstatus.other.Settings
 import java.util.*
-import kotlin.reflect.jvm.internal.impl.descriptors.Visibilities
 
 
 class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnItemSelectedListener,SeekBar.OnSeekBarChangeListener {
@@ -24,12 +22,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
 
     private val languages=arrayOf("Choose language","English","French")
     private val settings=Settings()
+    @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val languageAdapter = ArrayAdapter<String>(view?.context,android.R.layout.simple_spinner_item,languages)
+        val languageAdapter = ArrayAdapter<String>(view.context,android.R.layout.simple_spinner_item,languages)
 
-        settings.context = view?.context
+        settings.context = view.context
 
         settings.loadSettings()
         languageAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
@@ -40,8 +39,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
         distanceSeekBar.progress=settings.distanceBetweenPoints
         distanceTextView.text = "${(distanceSeekBar.progress.toFloat()/10)} M"
         
-        val unitsGroup = view?.findViewById<ChipGroup>(R.id.units_chip_group)
-        val modegroup = view?.findViewById<ChipGroup>(R.id.mode_select_chips_group)
+        val unitsGroup = view.findViewById<ChipGroup>(R.id.units_chip_group)
+        val modegroup = view.findViewById<ChipGroup>(R.id.mode_select_chips_group)
 
         distanceSeekBar.setOnSeekBarChangeListener(this)
 
@@ -69,12 +68,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
         units_chip_group.setOnCheckedChangeListener { _, checkedId ->
             when(checkedId){
                 R.id.units_select_chip_1->{
-                    Toast.makeText(view?.context,"Checked 1",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(view.context,"Checked 1",Toast.LENGTH_SHORT).show()
                     settings.units=0
 
                 }
                 R.id.units_select_chip_2->{
-                    Toast.makeText(view?.context,"Checked 2",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(view.context,"Checked 2",Toast.LENGTH_SHORT).show()
                     settings.units=1
                 }
 
@@ -131,6 +130,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings), AdapterView.OnIte
 
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
         distanceTextView.text = "${(distanceSeekBar.progress.toFloat()/10)} M"
         settings.distanceBetweenPoints = distanceSeekBar.progress

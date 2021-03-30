@@ -39,7 +39,6 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
     var mapView: MapView? = null
     var lastMarker: Marker? = null
 
-    private var mapTouchPosition: LatLng? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         //find the google map that's in the layout
@@ -131,7 +130,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         popup.show()
     }
 
-    fun setDataToMap() {
+    private fun setDataToMap() {
 
         //list of polyline to be drawn when ready
         val polyLines = ArrayList<PolylineOptions>()
@@ -153,8 +152,8 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
         var gotHighSpeed = false
         //loop through all points of the road , if point's speed > 4 then we add it to the red polyline else to the blue polyline then draw those polylines
         for (i in 0 until roadStatusData!!.length()) {
-            val long = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
-            val lat = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
+            val longitude = roadStatusData?.getJSONObject(i.toString())?.get("Longitude") as Double
+            val latitude = roadStatusData?.getJSONObject(i.toString())?.get("Latitude") as Double
 
             var oldlat: Double? = null
             var oldlong: Double? = null
@@ -171,24 +170,24 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             if (sp < 4) {
                 if (gotHighSpeed && points.size != 0) {
                     points.add(LatLng(oldlat!!, oldlong!!))
-                    points.add(LatLng(lat, long))
+                    points.add(LatLng(latitude, longitude))
                     polyLines.add(generatePolyLine(points, Color.RED))
                     points.clear()
                     gotHighSpeed = false
                 }
-                points.add(LatLng(lat, long))
+                points.add(LatLng(latitude, longitude))
             }
 
             if (sp >= 4) {
                 if (!gotHighSpeed && points.size != 0) {
 
                     points.add(LatLng(oldlat!!, oldlong!!))
-                    points.add(LatLng(lat, long))
+                    points.add(LatLng(latitude, longitude))
                     polyLines.add(generatePolyLine(points, Color.BLUE))
                     points.clear()
                     gotHighSpeed = true
                 }
-                points.add(LatLng(lat, long))
+                points.add(LatLng(latitude, longitude))
             }
 
 
@@ -203,7 +202,7 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
             //mark last point as the ending location
             if (i == roadStatusData!!.length() - 1) {
                 gmap?.addMarker(
-                    MarkerOptions().position(LatLng(lat, long)).title("Ending location")
+                    MarkerOptions().position(LatLng(latitude, longitude)).title("Ending location")
                 )?.tag = "ending location"
             }
         }
@@ -293,7 +292,6 @@ class RoadStatusItemMapFragment : Fragment(R.layout.fragment_road_status_item_ma
 
 
     override fun onMapClick(position: LatLng?) {
-        mapTouchPosition = position
     }
 
     override fun onMapLongClick(p0: LatLng?) {

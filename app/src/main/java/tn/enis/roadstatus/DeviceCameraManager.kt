@@ -2,7 +2,6 @@ package tn.enis.roadstatus
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
@@ -19,6 +18,7 @@ import java.io.File
 import java.io.IOException
 
 @Suppress("DEPRECATION")
+@SuppressLint("LogNotTimber")
 class DeviceCameraManager(private val filesFolder: File, private val context: Context, private val videoPreview: TextureView)
 {
     private lateinit var backgroundThread: HandlerThread
@@ -72,6 +72,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         cameraDevice.createCaptureSession(
             surfaces,
             object : CameraCaptureSession.StateCallback() {
+
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     Log.e(TAG, "creating record session failed!")
                 }
@@ -159,7 +160,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
     }
 
     //Get the camera's characteristics (front or back camera)
-    fun <T> cameraCharacteristics(cameraId: String, key: CameraCharacteristics.Key<T>): T {
+    private fun <T> cameraCharacteristics(cameraId: String, key: CameraCharacteristics.Key<T>): T {
         val characteristics = cameraManager.getCameraCharacteristics(cameraId)
         return when (key) {
             CameraCharacteristics.LENS_FACING -> characteristics.get(key)!!
@@ -169,7 +170,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
 
 
     //Select which camera to use
-    fun cameraId(lens: Int): String {
+    private fun cameraId(lens: Int): String {
         var deviceId = listOf<String>()
         try {
             val cameraIdList = cameraManager.cameraIdList
@@ -205,7 +206,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         mediaRecorder.apply {
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setOutputFile(filesFolder!!.absolutePath + "/Recording$recordNumber.mp4")
+            setOutputFile(filesFolder.absolutePath + "/Recording$recordNumber.mp4")
             setVideoEncodingBitRate(1000000)
             setVideoFrameRate(30)
             setVideoSize(1280, 720)

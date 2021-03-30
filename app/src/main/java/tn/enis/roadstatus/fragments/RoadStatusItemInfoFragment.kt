@@ -1,8 +1,7 @@
 package tn.enis.roadstatus.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
@@ -27,17 +26,18 @@ class RoadStatusItemInfoFragment : Fragment(R.layout.fragment_road_status_item_i
     var road:RoadStatus?=null
     var id:Int?=-1
 
+    @SuppressLint("SetTextI18n", "SimpleDateFormat")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val changeBt = view?.findViewById<Button>(R.id.change_label_name_bt)
+        val changeBt = view.findViewById<Button>(R.id.change_label_name_bt)
 
-        labelInput = view?.findViewById(R.id.road_status_item_label_layout)
+        labelInput = view.findViewById(R.id.road_status_item_label_layout)
         road_status_item_label_field.addTextChangedListener {
             labelInputChanged()
         }
         changeBt?.setOnClickListener {
             changeLabel()
-            road = DatabaseHandler().getItemById(view?.context,id!!)
+            road = DatabaseHandler().getItemById(view.context,id!!)
             updateTitle()
         }
 

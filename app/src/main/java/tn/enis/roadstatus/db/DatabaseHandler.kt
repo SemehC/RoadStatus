@@ -1,12 +1,8 @@
 package tn.enis.roadstatus.db
 
 import android.content.Context
-import android.util.Log
 import kotlinx.coroutines.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import tn.enis.roadstatus.other.Constants.DATABASE_NAME
 
 class DatabaseHandler {
 
