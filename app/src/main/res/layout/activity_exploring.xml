@@ -34,7 +34,7 @@
             android:layout_weight="1"
 
             android:checked="true"
-            android:text="Default Map"></RadioButton>
+            android:text="Default Map"/>
 
         <RadioButton
             android:id="@+id/satelliteStyle"
@@ -55,6 +55,14 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextureView
+        android:id="@+id/videoPreview"
+        android:layout_width="119dp"
+        android:layout_height="171dp"
+        android:longClickable="false"
+        app:layout_constraintEnd_toEndOf="@+id/mapView"
+        app:layout_constraintTop_toTopOf="@+id/mapView" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

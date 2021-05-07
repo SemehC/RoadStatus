@@ -2,30 +2,33 @@ package tn.enis.roadstatus
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.*
 import android.media.MediaRecorder
 import android.os.Handler
 import android.os.HandlerThread
-import android.hardware.camera2.*
 import android.util.Log
+import android.util.Range
 import android.view.Surface
 import android.view.TextureView
 import androidx.core.view.isVisible
 import java.io.File
 import java.io.IOException
 
+
 @Suppress("DEPRECATION")
 @SuppressLint("LogNotTimber")
-class DeviceCameraManager(private val filesFolder: File, private val context: Context, private val videoPreview: TextureView)
-{
+class DeviceCameraManager(
+    private val filesFolder: File,
+    private val context: Context,
+    private val videoPreview: TextureView
+) {
     private lateinit var backgroundThread: HandlerThread
     private lateinit var backgroundHandler: Handler
     private lateinit var cameraDevice: CameraDevice
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
     private lateinit var captureSession: CameraCaptureSession
+
+
     private val mediaRecorder by lazy {
         MediaRecorder()
     }
@@ -34,6 +37,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
     }
 
     private var recordNumber: Int = 0
+
 
     //Get camera state (opened / disconnected / error)
     private val deviceStateCallback = object : CameraDevice.StateCallback() {
@@ -53,6 +57,7 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         }
 
     }
+
 
     // Record the video output taken by camera
     fun recordSession() {
@@ -97,9 +102,12 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
         try {
 
             val surfaceTexture = videoPreview.surfaceTexture
+
             val surface = Surface(surfaceTexture)
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+
             captureRequestBuilder.addTarget(surface)
+
             cameraDevice.createCaptureSession(
                 mutableListOf(surface),
                 object : CameraCaptureSession.StateCallback() {
@@ -119,10 +127,13 @@ class DeviceCameraManager(private val filesFolder: File, private val context: Co
                                 null,
                                 null
                             )
+
+
                         } catch (e: CameraAccessException) {
                             Log.e(TAG, e.toString())
                         }
                     }
+
                 }, null
             )
 

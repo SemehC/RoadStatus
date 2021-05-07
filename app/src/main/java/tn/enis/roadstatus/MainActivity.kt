@@ -185,8 +185,8 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
 
     }
-    private fun chooseTypes(intent:Intent)
-    {
+
+    private fun chooseTypes(intent: Intent) {
         val builder2 = AlertDialog.Builder(this)
 
         val types = arrayOf(
@@ -222,6 +222,7 @@ class MainActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
         // Display the alert dialog on app interface
         dialog2.show()
     }
+
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
 
     }

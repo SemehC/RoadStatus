@@ -18,12 +18,12 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
-    private var roads=ArrayList<RoadStatus>()
+    private var roads = ArrayList<RoadStatus>()
     private val arrayList = ArrayList<RoadStatusItem>()
     lateinit var myAdapter: RoadStatusItemAdapter
 
-    private var t:Toast?=null
-    var mainActivity:MainActivity?=null
+    private var t: Toast? = null
+    var mainActivity: MainActivity? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -31,41 +31,44 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         swiperefresh.setOnRefreshListener {
             refresh()
-            swiperefresh.isRefreshing=false
+            swiperefresh.isRefreshing = false
         }
 
         refresh()
-        myAdapter = RoadStatusItemAdapter(arrayList,view.context!!,mainActivity!!,this)
+        myAdapter = RoadStatusItemAdapter(arrayList, view.context!!, mainActivity!!, this)
         recyclerView.layoutManager = LinearLayoutManager(view.context)
         recyclerView.adapter = myAdapter
 
     }
 
     @SuppressLint("SimpleDateFormat")
-    private fun prepareData():Boolean{
-            arrayList.clear()
-            roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
-            roads.forEach {
-                val date = Date(it.date)
-                val format = SimpleDateFormat("yyyy.MM.dd HH:mm")
-                arrayList.add(RoadStatusItem(it.id,
-                    it.label,format.format(date).toString(),it.img,it.file_name!!))
-            }
+    private fun prepareData(): Boolean {
+        arrayList.clear()
+        roads = ArrayList(DatabaseHandler().getAllRoadStatus(view?.context!!))
+        roads.forEach {
+            val date = Date(it.date)
+            val format = SimpleDateFormat("yyyy.MM.dd HH:mm")
+            arrayList.add(
+                RoadStatusItem(
+                    it.id,
+                    it.label, format.format(date).toString(), it.img, it.file_name!!
+                )
+            )
+        }
 
         return true
     }
 
 
-
-    fun refresh(){
+    fun refresh() {
         val newData = prepareData()
-        if(newData){
-            myAdapter = RoadStatusItemAdapter(arrayList,view?.context!!,mainActivity!!,this)
+        if (newData) {
+            myAdapter = RoadStatusItemAdapter(arrayList, view?.context!!, mainActivity!!, this)
             recyclerView.layoutManager = LinearLayoutManager(view?.context)
             recyclerView.adapter = myAdapter
-        }else{
+        } else {
             t?.cancel()
-            t=Toast.makeText(view?.context,"Up to date",Toast.LENGTH_SHORT)
+            t = Toast.makeText(view?.context, "Up to date", Toast.LENGTH_SHORT)
             t?.show()
         }
     }
@@ -74,7 +77,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onResume()
         refresh()
     }
-
 
 
 }

@@ -35,7 +35,7 @@
             android:layout_weight="1"
 
             android:checked="true"
-            android:text="Default Map"></RadioButton>
+            android:text="Default Map"/>
 
         <RadioButton
             android:id="@+id/satelliteStyle"
